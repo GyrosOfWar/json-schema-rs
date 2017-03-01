@@ -7,11 +7,11 @@ mod errors;
 
 use json::JsonValue;
 
-pub type ValidationResult<'a> = Result<(), ValidationError<'a>>;
+pub type ValidationResult<'json> = Result<(), ValidationError<'json>>;
 
-pub struct ValidationError<'a> {
+pub struct ValidationError<'json> {
     reason: ErrorReason,
-    node: &'a JsonValue,
+    node: &'json JsonValue,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -25,6 +25,7 @@ pub enum JsonType {
     Integer,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum ErrorReason {
     TypeMismatch { expected: JsonType, found: JsonType },
     TupleLengthMismatch { schemas: usize, tuple: usize },
@@ -33,22 +34,21 @@ pub enum ErrorReason {
 }
 
 pub trait SchemaBase {
-    fn validate(&self, value: &JsonValue) -> ValidationResult;
+    fn validate<'json>(&self, value: &'json JsonValue) -> ValidationResult<'json>;
 }
 
-pub enum Schema<'a> {
-    Boolean(BooleanSchema<'a>),
-    Object(ObjectSchema<'a>),
-    Array(ArraySchema<'a>),
-    Number(NumberSchema<'a>),
-    String(StringSchema<'a>),
-    Integer(IntegerSchema<'a>),
+pub enum Schema<'schema> {
+    Boolean(BooleanSchema<'schema>),
+    Object(ObjectSchema<'schema>),
+    Array(ArraySchema<'schema>),
+    Number(NumberSchema<'schema>),
+    String(StringSchema<'schema>),
+    Integer(IntegerSchema<'schema>),
 }
 
-impl<'a> Schema<'a> {
-    pub fn validate(&self, value: &JsonValue) -> ValidationResult {
+impl<'schema> Schema<'schema> {
+    pub fn validate<'json>(&self, value: &'json JsonValue) -> ValidationResult<'json> {
         use self::Schema::*;
-        // TODO this is not right
         match *self {
             Boolean(ref s) => s.validate(value),
             Object(ref s) => s.validate(value),
@@ -60,14 +60,14 @@ impl<'a> Schema<'a> {
     }
 }
 
-pub struct BooleanSchema<'a> {
-    description: Option<&'a str>,
-    id: Option<&'a str>,
-    title: Option<&'a str>,
+pub struct BooleanSchema<'schema> {
+    description: Option<&'schema str>,
+    id: Option<&'schema str>,
+    title: Option<&'schema str>,
 }
 
-impl<'a> SchemaBase for BooleanSchema<'a> {
-    fn validate(&self, value: &JsonValue) -> ValidationResult {
+impl<'schema> SchemaBase for BooleanSchema<'schema> {
+    fn validate<'json>(&self, value: &'json JsonValue) -> ValidationResult<'json> {
         if value.is_boolean() {
             Ok(())
         } else {
@@ -79,31 +79,31 @@ impl<'a> SchemaBase for BooleanSchema<'a> {
     }
 }
 
-pub struct ObjectSchema<'a> {
-    description: Option<&'a str>,
-    id: Option<&'a str>,
-    title: Option<&'a str>,
+pub struct ObjectSchema<'schema> {
+    description: Option<&'schema str>,
+    id: Option<&'schema str>,
+    title: Option<&'schema str>,
 
     // TODO
 }
 
-impl<'a> SchemaBase for ObjectSchema<'a> {
-    fn validate(&self, value: &JsonValue) -> ValidationResult {
+impl<'schema> SchemaBase for ObjectSchema<'schema> {
+    fn validate<'json>(&self, value: &'json JsonValue) -> ValidationResult<'json> {
         unimplemented!()
     }
 }
 
-pub struct ArraySchema<'a> {
+pub struct ArraySchema<'schema> {
     min_items: Option<usize>,
     max_items: Option<usize>,
     unique_items: bool,
-    all_items_schema: Box<Option<Schema<'a>>>,
-    item_schemas: Option<Vec<Schema<'a>>>,
+    all_items_schema: Box<Option<Schema<'schema>>>,
+    item_schemas: Option<Vec<Schema<'schema>>>,
     // TODO
 }
 
-impl<'a> ArraySchema<'a> {
-    fn validate_size(&self, array: &[JsonValue], parent: &JsonValue) -> ValidationResult {
+impl<'schema> ArraySchema<'schema> {
+    fn validate_size<'json>(&self, array: &'json [JsonValue], parent: &'json JsonValue) -> ValidationResult<'json> {
         if let Some(min) = self.min_items {
             if array.len() < min {
                 return Err(ValidationError {
@@ -124,7 +124,7 @@ impl<'a> ArraySchema<'a> {
         Ok(())
     }
 
-    fn validate_all_items_schema(&self, array: &[JsonValue]) -> ValidationResult {
+    fn validate_all_items_schema<'json>(&self, array: &'json [JsonValue]) -> ValidationResult<'json> {
         if let Some(ref schema) = *self.all_items_schema {
             for value in array {
                 schema.validate(&value)?;
@@ -134,7 +134,7 @@ impl<'a> ArraySchema<'a> {
         Ok(())
     }
 
-    fn validate_item_schema(&self, array: &[JsonValue], parent: &JsonValue) -> ValidationResult {
+    fn validate_item_schema<'json>(&self, array: &'json [JsonValue], parent: &'json JsonValue) -> ValidationResult<'json> {
         if let Some(ref schemas) = self.item_schemas {
             if schemas.len() != array.len() {
                 return Err(ValidationError {
@@ -152,8 +152,9 @@ impl<'a> ArraySchema<'a> {
     }
 }
 
-impl<'a> SchemaBase for ArraySchema<'a> {
-    fn validate(&self, value: &JsonValue) -> ValidationResult {
+
+impl<'schema> SchemaBase for ArraySchema<'schema> {
+    fn validate<'json>(&self, value: &'json JsonValue) -> ValidationResult<'json> {
         match value {
             &JsonValue::Array(ref array) => {
                 self.validate_size(array, value)?;
@@ -168,38 +169,38 @@ impl<'a> SchemaBase for ArraySchema<'a> {
     }
 }
 
-pub struct NumberSchema<'a> {
-    description: Option<&'a str>,
-    id: Option<&'a str>,
-    title: Option<&'a str>,
+pub struct NumberSchema<'schema> {
+    description: Option<&'schema str>,
+    id: Option<&'schema str>,
+    title: Option<&'schema str>,
 }
 
-impl<'a> SchemaBase for NumberSchema<'a> {
-    fn validate(&self, value: &json::JsonValue) -> ValidationResult {
+impl<'schema> SchemaBase for NumberSchema<'schema> {
+    fn validate<'json>(&self, value: &'json JsonValue) -> ValidationResult<'json> {
         unimplemented!()
     }
 }
 
-pub struct StringSchema<'a> {
-    description: Option<&'a str>,
-    id: Option<&'a str>,
-    title: Option<&'a str>,
+pub struct StringSchema<'schema> {
+    description: Option<&'schema str>,
+    id: Option<&'schema str>,
+    title: Option<&'schema str>,
 }
 
-impl<'a> SchemaBase for StringSchema<'a> {
-    fn validate(&self, value: &json::JsonValue) -> ValidationResult {
+impl<'schema> SchemaBase for StringSchema<'schema> {
+    fn validate<'json>(&self, value: &'json JsonValue) -> ValidationResult<'json> {
         unimplemented!()
     }
 }
 
-pub struct IntegerSchema<'a> {
-    description: Option<&'a str>,
-    id: Option<&'a str>,
-    title: Option<&'a str>,
+pub struct IntegerSchema<'schema> {
+    description: Option<&'schema str>,
+    id: Option<&'schema str>,
+    title: Option<&'schema str>,
 }
 
 impl<'a> SchemaBase for IntegerSchema<'a> {
-    fn validate(&self, value: &json::JsonValue) -> ValidationResult {
+    fn validate<'json>(&self, value: &'json JsonValue) -> ValidationResult<'json> {
         unimplemented!()
     }
 }
