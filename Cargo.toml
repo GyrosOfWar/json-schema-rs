@@ -6,3 +6,7 @@ authors = ["Martin Tomasi <martin.tomasi@gmail.com>"]
 [dependencies]
 json = "*"
 error-chain = "*"
+clippy = {version = "*", optional = true}
+
+[features]
+default = []
