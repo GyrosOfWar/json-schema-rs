@@ -1,6 +1,7 @@
 use json::JsonValue;
 
-use super::{Schema, ValidationError, ErrorReason, SchemaBase, JsonValueExt, JsonType};
+use super::{Schema, SchemaBase, JsonValueExt, JsonType};
+use errors::{ValidationError, ErrorReason};
 
 #[derive(Clone, Debug)]
 pub struct ArraySchema<'schema> {
@@ -225,15 +226,17 @@ impl<'schema> ArraySchemaBuilder<'schema> {
 mod tests {
     use json;
     use super::*;
+    use super::super::NumberSchemaBuilder;
+    use errors::*;
 
     #[test]
     fn unique_elements() {
         let schema = ArraySchemaBuilder::default()
             .unique_items(true)
             .build();
-        let json = json::parse("[1, 1, 2, 3, 4]").unwrap();
+        let input = json::parse("[1, 1, 2, 3, 4]").unwrap();
         let mut errors = vec![];
-        schema.validate(&json, &mut errors);
+        schema.validate(&input, &mut errors);
         println!("{:?}", errors);
         assert_eq!(errors.len(), 1);
         assert_eq!(errors[0].reason, ErrorReason::ArrayItemNotUnique);
@@ -247,6 +250,20 @@ mod tests {
         schema.validate(&input, &mut errors);
         println!("{:?}", errors);
         assert_eq!(errors.len(), 0)
-        
+    }
+
+    #[test]
+    fn subschema() {
+        let input = json::parse(r#"[1.2, 1.4, 1.9, 2.5]"#).unwrap();
+        let item_schema = NumberSchemaBuilder::default()
+            .minimum(1.0)
+            .maximum(2.0)
+            .build();
+        let schema = ArraySchemaBuilder::default()
+            .all_items_schema(item_schema)
+            .build();
+        let mut errors = vec![];
+        schema.validate(&input, &mut errors);
+        assert_eq!(errors.len(), 0);
     }
 }
