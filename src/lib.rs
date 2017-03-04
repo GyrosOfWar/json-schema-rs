@@ -4,17 +4,24 @@
 
 extern crate json;
 extern crate regex;
+extern crate chrono;
+#[macro_use]
+extern crate lazy_static;
 
 mod errors;
 mod array;
 mod schema;
 mod object;
 mod number;
+mod string;
 
 use json::JsonValue;
+use regex::Regex;
 
-use errors::{ValidationError, ErrorReason};
-use schema::{SchemaBase, Schema};
+pub use errors::{ValidationError, ErrorReason};
+pub use schema::{SchemaBase, Schema};
+pub use array::{ArraySchema, ArraySchemaBuilder};
+pub use object::{ObjectSchema, ObjectSchemaBuilder};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum JsonType {
@@ -47,21 +54,6 @@ impl<'schema> SchemaBase for BooleanSchema<'schema> {
                 node: value,
             });
         }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct StringSchema<'schema> {
-    description: Option<&'schema str>,
-    id: Option<&'schema str>,
-    title: Option<&'schema str>,
-}
-
-impl<'schema> SchemaBase for StringSchema<'schema> {
-    fn validate_inner<'json>(&self,
-                             value: &'json JsonValue,
-                             errors: &mut Vec<ValidationError<'json>>) {
-        unimplemented!()
     }
 }
 

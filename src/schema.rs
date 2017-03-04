@@ -1,10 +1,11 @@
 use json::JsonValue;
 
-use super::{BooleanSchema, StringSchema, IntegerSchema};
+use super::{BooleanSchema, IntegerSchema};
 use errors::ValidationError;
 use array::ArraySchema;
 use object::ObjectSchema;
 use number::NumberSchema;
+use string::StringSchema;
 
 pub trait SchemaBase {
     fn validate_inner<'json>(&self,

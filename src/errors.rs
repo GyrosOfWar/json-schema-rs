@@ -12,7 +12,7 @@ pub enum ErrorReason {
     ArrayItemNotUnique,
     NumberRange { bound: f64, value: f64 },
     PropertyCount { bound: usize, found: usize },
-    InvalidRegex(String)
+    InvalidRegex(String),
 }
 
 pub type ValidationResult<'json> = Result<(), ValidationError<'json>>;
