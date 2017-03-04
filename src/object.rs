@@ -95,7 +95,16 @@ impl<'schema> ObjectSchema<'schema> {
                 // TODO(performance) cache compiled regexes
                 match Regex::new(pattern) {
                     Ok(re) => {
-                        // TODO
+                        let mut found_match = false;
+                        for (prop, value) in object.iter() {
+                            if re.is_match(prop) {
+                                schema.validate_inner(value, errors);
+                                found_match = true;
+                            }
+                        }
+                        if !found_match {
+                            // Error: No matching property found
+                        }
                     },
                     Err(e) => errors.push(ValidationError {
                         reason: ErrorReason::InvalidRegex(format!("{}", e)),
@@ -116,6 +125,7 @@ impl<'schema> SchemaBase for ObjectSchema<'schema> {
                 self.validate_properties(o, value, errors);
                 self.validate_required(o, value, errors);
                 self.validate_count(o, value, errors);
+                self.validate_pattern_properties(o, value, errors);
             }
             val => {
                 errors.push(ValidationError {
