@@ -14,7 +14,7 @@ pub struct ObjectSchema<'schema> {
     id: Option<&'schema str>,
     title: Option<&'schema str>,
 
-    property_schemas: Option<HashMap<String, Schema<'schema>>>,
+    property_schemas: Option<HashMap<&'schema str, Schema<'schema>>>,
     // TODO either object or bool
     additional_properties: bool,
     required: Option<Vec<&'schema str>>,
@@ -37,7 +37,7 @@ impl<'schema> ObjectSchema<'schema> {
                     None => {
                         if !self.additional_properties {
                             errors.push(ValidationError {
-                                reason: ErrorReason::MissingProperty(property.clone()),
+                                reason: ErrorReason::MissingProperty(property.to_string()),
                                 node: parent,
                             });
                         }
@@ -154,7 +154,7 @@ pub struct ObjectSchemaBuilder<'schema> {
     id: Option<&'schema str>,
     title: Option<&'schema str>,
 
-    property_schemas: Option<HashMap<String, Schema<'schema>>>,
+    property_schemas: Option<HashMap<&'schema str, Schema<'schema>>>,
     // TODO either object or bool
     additional_properties: bool,
     required: Option<Vec<&'schema str>>,
@@ -196,7 +196,7 @@ impl<'schema> ObjectSchemaBuilder<'schema> {
         self
     }
 
-    pub fn property_schemas<V: Into<HashMap<String, Schema<'schema>>>>(mut self, value: V) -> Self {
+    pub fn property_schemas(mut self, value: HashMap<&'schema str, Schema<'schema>>) -> Self {
         self.property_schemas = Some(value.into());
         self
     }
@@ -230,6 +230,9 @@ impl<'schema> ObjectSchemaBuilder<'schema> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use super::super::IntegerSchema;
+    use string::StringSchema;
+    use array::ArraySchemaBuilder;
     use json;
 
     #[test]
@@ -255,7 +258,37 @@ mod tests {
         let schema = ObjectSchemaBuilder::default().required(vec!["id", "name", "missing"]).build();
         let errors = schema.validate(&input).unwrap_err();
         assert_eq!(errors.len(), 1);
-        assert_eq!(errors[0].reason,
-                   ErrorReason::MissingProperty(String::from("missing")));
+
+        if let ErrorReason::MissingProperty(ref prop) = errors[0].reason {
+            assert_eq!(prop.as_str(), "missing");
+        } else {
+            assert!(false, "Wrong property");
+        }
+    }
+
+    #[test]
+    fn schema_properties() {
+        let input = json::parse(r#"{"id": 123, "name": "test", "tags": ["a", "b", "c"], "color": [255, 255, 255]}"#).unwrap();
+        let mut schemas = HashMap::new();
+        schemas.insert("id", Schema::from(IntegerSchema::default()));
+        schemas.insert("name", Schema::from(StringSchema::default()));
+        let tags = ArraySchemaBuilder::default()
+            .all_items_schema(Schema::from(StringSchema::default()))
+            .build();
+        schemas.insert("tags", tags);
+        let color = ArraySchemaBuilder::default()
+            .additional_items(false)
+            .item_schemas(vec![Schema::from(IntegerSchema::default()),
+                               Schema::from(IntegerSchema::default()),
+                               Schema::from(IntegerSchema::default())])
+            .build();
+        schemas.insert("color", color);
+
+        let schema = ObjectSchemaBuilder::default()
+            .property_schemas(schemas)
+            .additional_properties(false)
+            .build();
+
+        schema.validate(&input).unwrap();
     }
 }

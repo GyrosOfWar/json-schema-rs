@@ -242,7 +242,11 @@ mod tests {
         let mut errors = vec![];
         schema.validate_inner(&input, &mut errors);
         assert_eq!(errors.len(), 1);
-        assert_eq!(errors[0].reason, ErrorReason::ArrayItemNotUnique);
+        if let ErrorReason::ArrayItemNotUnique = errors[0].reason {
+
+        } else {
+            assert!(false, "Wrong error reason");
+        }
     }
 
     #[test]
@@ -268,10 +272,11 @@ mod tests {
         schema.validate_inner(&input, &mut errors);
         assert_eq!(errors.len(), 2);
         assert_eq!(*errors[0].node, input[0]);
-        assert_eq!(errors[1].reason,
-                   ErrorReason::NumberRange {
-                       value: 2.5,
-                       bound: 2.0,
-                   });
+        if let ErrorReason::NumberRange { value, bound } = errors[1].reason {
+            assert_eq!(value, 2.5);
+            assert_eq!(bound, 2.0);
+        } else {
+            assert!(false, "Wrong property");
+        }
     }
 }

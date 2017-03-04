@@ -8,6 +8,7 @@ use number::NumberSchema;
 use string::StringSchema;
 
 pub trait SchemaBase {
+    #[doc(hidden)]
     fn validate_inner<'json>(&self,
                              value: &'json JsonValue,
                              errors: &mut Vec<ValidationError<'json>>);

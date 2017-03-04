@@ -1,8 +1,10 @@
 use json::JsonValue;
 
 use super::JsonType;
+use string::Format;
+use regex::Regex;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub enum ErrorReason {
     TypeMismatch { expected: JsonType, found: JsonType },
     TupleLengthMismatch { schemas: usize, tuple: usize },
@@ -13,6 +15,8 @@ pub enum ErrorReason {
     NumberRange { bound: f64, value: f64 },
     PropertyCount { bound: usize, found: usize },
     InvalidRegex(String),
+    InvalidFormat(Format),
+    RegexMismatch { regex: Regex },
 }
 
 pub type ValidationResult<'json> = Result<(), ValidationError<'json>>;

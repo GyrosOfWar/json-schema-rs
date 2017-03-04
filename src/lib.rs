@@ -57,7 +57,7 @@ impl<'schema> SchemaBase for BooleanSchema<'schema> {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct IntegerSchema<'schema> {
     description: Option<&'schema str>,
     id: Option<&'schema str>,
@@ -68,7 +68,18 @@ impl<'schema> SchemaBase for IntegerSchema<'schema> {
     fn validate_inner<'json>(&self,
                              value: &'json JsonValue,
                              errors: &mut Vec<ValidationError<'json>>) {
-        unimplemented!()
+        match value.get_type() {
+            JsonType::Integer => {}
+            ty => {
+                errors.push(ValidationError {
+                    reason: ErrorReason::TypeMismatch {
+                        expected: JsonType::Integer,
+                        found: ty,
+                    },
+                    node: value,
+                })
+            }
+        }
     }
 }
 
