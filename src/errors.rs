@@ -11,6 +11,8 @@ pub enum ErrorReason {
     MissingProperty(String),
     ArrayItemNotUnique,
     NumberRange { bound: f64, value: f64 },
+    PropertyCount { bound: usize, found: usize },
+    InvalidRegex(String)
 }
 
 pub type ValidationResult<'json> = Result<(), ValidationError<'json>>;
