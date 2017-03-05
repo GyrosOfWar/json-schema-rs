@@ -1,6 +1,6 @@
 use json::JsonValue;
 
-use super::{JsonType, JsonValueExt};
+use util::{JsonType, JsonValueExt};
 use errors::{ValidationError, ErrorReason};
 use schema::{Schema, SchemaBase};
 
@@ -89,13 +89,13 @@ pub struct NumberSchemaBuilder<'schema> {
 }
 
 impl<'schema> NumberSchemaBuilder<'schema> {
-    pub fn minimum<V: Into<f64>>(mut self, value: V) -> Self {
-        self.minimum = Some(value.into());
+    pub fn minimum(mut self, value: f64) -> Self {
+        self.minimum = Some(value);
         self
     }
 
-    pub fn maximum<V: Into<f64>>(mut self, value: V) -> Self {
-        self.maximum = Some(value.into());
+    pub fn maximum(mut self, value: f64) -> Self {
+        self.maximum = Some(value);
         self
     }
 
@@ -112,4 +112,12 @@ impl<'schema> NumberSchemaBuilder<'schema> {
             exclusive_maximum: self.exclusive_maximum,
         })
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn range() {}
 }

@@ -1,6 +1,6 @@
 use json::JsonValue;
 
-use super::JsonType;
+use util::JsonType;
 use string::Format;
 use regex::Regex;
 

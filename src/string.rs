@@ -1,7 +1,7 @@
 use regex::Regex;
 use json::JsonValue;
 
-use super::{JsonType, JsonValueExt};
+use util::{JsonType, JsonValueExt};
 use schema::SchemaBase;
 use errors::{ValidationError, ErrorReason};
 use chrono::prelude::*;

@@ -1,6 +1,7 @@
 use json::JsonValue;
 
-use super::{BooleanSchema, IntegerSchema};
+use boolean::BooleanSchema;
+use integer::IntegerSchema;
 use errors::ValidationError;
 use array::ArraySchema;
 use object::ObjectSchema;

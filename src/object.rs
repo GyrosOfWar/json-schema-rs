@@ -4,7 +4,7 @@ use json::JsonValue;
 use json::object::Object;
 use regex::Regex;
 
-use super::{JsonType, JsonValueExt};
+use util::{JsonType, JsonValueExt};
 use schema::{Schema, SchemaBase};
 use errors::{ValidationError, ErrorReason};
 
@@ -206,8 +206,8 @@ impl<'schema> ObjectSchemaBuilder<'schema> {
         self
     }
 
-    pub fn additional_properties<V: Into<bool>>(mut self, value: V) -> Self {
-        self.additional_properties = value.into();
+    pub fn additional_properties(mut self, value: bool) -> Self {
+        self.additional_properties = value;
         self
     }
 
@@ -230,7 +230,7 @@ impl<'schema> ObjectSchemaBuilder<'schema> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use super::super::IntegerSchema;
+    use integer::IntegerSchema;
     use string::StringSchema;
     use array::ArraySchemaBuilder;
     use json;

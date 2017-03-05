@@ -1,6 +1,6 @@
 use json::JsonValue;
 
-use super::{JsonValueExt, JsonType};
+use util::{JsonValueExt, JsonType};
 use errors::{ValidationError, ErrorReason};
 use schema::{Schema, SchemaBase};
 
@@ -178,18 +178,18 @@ impl<'schema> ArraySchemaBuilder<'schema> {
         self
     }
 
-    pub fn min_items<V: Into<usize>>(mut self, value: V) -> Self {
-        self.min_items = Some(value.into());
+    pub fn min_items(mut self, value: usize) -> Self {
+        self.min_items = Some(value);
         self
     }
 
-    pub fn max_items<V: Into<usize>>(mut self, value: V) -> Self {
-        self.max_items = Some(value.into());
+    pub fn max_items(mut self, value: usize) -> Self {
+        self.max_items = Some(value);
         self
     }
 
-    pub fn unique_items<V: Into<bool>>(mut self, value: V) -> Self {
-        self.unique_items = value.into();
+    pub fn unique_items(mut self, value: bool) -> Self {
+        self.unique_items = value;
         self
     }
 
@@ -203,8 +203,8 @@ impl<'schema> ArraySchemaBuilder<'schema> {
         self
     }
 
-    pub fn additional_items<V: Into<bool>>(mut self, value: V) -> Self {
-        self.additional_items = value.into();
+    pub fn additional_items(mut self, value: bool) -> Self {
+        self.additional_items = value;
         self
     }
 
