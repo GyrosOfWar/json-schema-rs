@@ -4,7 +4,7 @@ use util::{JsonType, JsonValueExt};
 use errors::{ValidationError, ErrorReason};
 use schema::{Schema, SchemaBase};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct NumberSchema<'schema> {
     description: Option<&'schema str>,
     id: Option<&'schema str>,

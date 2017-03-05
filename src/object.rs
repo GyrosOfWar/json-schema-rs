@@ -211,6 +211,24 @@ impl<'schema> ObjectSchemaBuilder<'schema> {
         self
     }
 
+    pub fn add_property<K: Into<&'schema str>, V: Into<Schema<'schema>>>(mut self,
+                                                                         name: K,
+                                                                         value: V)
+                                                                         -> Self {
+        let mut map;
+        match self.property_schemas {
+            Some(m) => {
+                map = m;
+            }
+            None => {
+                map = HashMap::new();
+            }
+        }
+        map.insert(name.into(), value.into());
+        self.property_schemas = Some(map);
+        self
+    }
+
     pub fn build(self) -> Schema<'schema> {
         From::from(ObjectSchema {
             description: self.description,
@@ -233,6 +251,7 @@ mod tests {
     use integer::IntegerSchema;
     use string::StringSchema;
     use array::ArraySchemaBuilder;
+    use number::NumberSchema;
     use json;
 
     #[test]
@@ -268,7 +287,9 @@ mod tests {
 
     #[test]
     fn schema_properties() {
-        let input = json::parse(r#"{"id": 123, "name": "test", "tags": ["a", "b", "c"], "color": [255, 255, 255]}"#).unwrap();
+        let input = json::parse(r#"{"id": 123, "name": "test", "tags": ["a", "b", "c"],
+        "color": [255, 255, 255]}"#)
+            .unwrap();
         let mut schemas = HashMap::new();
         schemas.insert("id", Schema::from(IntegerSchema::default()));
         schemas.insert("name", Schema::from(StringSchema::default()));
@@ -289,6 +310,46 @@ mod tests {
             .additional_properties(false)
             .build();
 
+        schema.validate(&input).unwrap();
+    }
+
+    #[test]
+    fn test_big() {
+        use std::fs::File;
+        use std::io::prelude::*;
+
+        let vector = ArraySchemaBuilder::default()
+            .item_schemas(vec![From::from(NumberSchema::default()),
+                               From::from(NumberSchema::default())])
+            .build();
+
+        let coordinates = ArraySchemaBuilder::default()
+            .all_items_schema(ArraySchemaBuilder::default()
+                .all_items_schema(vector)
+                .build())
+            .build();
+
+        let geometry = ObjectSchemaBuilder::default()
+            .add_property("type", StringSchema::default())
+            .add_property("coordinatees", coordinates)
+            .build();
+
+        let features = ArraySchemaBuilder::default()
+            .all_items_schema(ObjectSchemaBuilder::default()
+                .add_property("type", StringSchema::default())
+                .add_property("geometry", geometry)
+                .build())
+            .build();
+        let schema = ObjectSchemaBuilder::default()
+            .add_property("type", Schema::from(StringSchema::default()))
+            .add_property("features", features)
+            .build();
+
+        let mut file = File::open("data/canada-small.json").unwrap();
+        let mut source = String::new();
+        file.read_to_string(&mut source).unwrap();
+        let input = json::parse(&source).unwrap();
+        println!("{:#?}", schema);
         schema.validate(&input).unwrap();
     }
 }

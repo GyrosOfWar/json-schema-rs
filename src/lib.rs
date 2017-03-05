@@ -5,8 +5,8 @@
 extern crate json;
 extern crate regex;
 extern crate chrono;
-// #[macro_use]
-// extern crate lazy_static;
+#[macro_use]
+extern crate lazy_static;
 
 pub mod errors;
 pub mod array;
