@@ -73,6 +73,10 @@ impl<'schema> SchemaBase for NumberSchema<'schema> {
             })
         }
     }
+
+    fn from_json(node: &JsonValue) -> Option<Schema> {
+        None
+    }
 }
 
 #[derive(Default)]

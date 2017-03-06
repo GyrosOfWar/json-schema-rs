@@ -1,7 +1,7 @@
 use json::JsonValue;
 
 use util::{JsonType, JsonValueExt};
-use schema::SchemaBase;
+use schema::{SchemaBase, Schema};
 use errors::{ValidationError, ErrorReason};
 
 #[derive(Clone, Debug, Default)]
@@ -33,5 +33,9 @@ impl<'schema> SchemaBase for IntegerSchema<'schema> {
                 })
             }
         }
+    }
+
+    fn from_json(node: &JsonValue) -> Option<Schema> {
+        None
     }
 }

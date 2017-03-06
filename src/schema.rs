@@ -14,6 +14,8 @@ pub trait SchemaBase {
                              value: &'json JsonValue,
                              errors: &mut Vec<ValidationError<'json>>);
 
+    fn from_json(node: &JsonValue) -> Option<Schema>;
+
     fn validate<'json>(&self, value: &'json JsonValue) -> Result<(), Vec<ValidationError<'json>>> {
         let mut errors = vec![];
         self.validate_inner(value, &mut errors);
@@ -28,6 +30,7 @@ pub trait SchemaBase {
 
 #[derive(Clone, Debug)]
 pub enum Schema<'schema> {
+    // TODO empty schema {} and null type
     Boolean(BooleanSchema<'schema>),
     Object(ObjectSchema<'schema>),
     Array(ArraySchema<'schema>),
@@ -66,5 +69,9 @@ impl<'schema> SchemaBase for Schema<'schema> {
             String(ref s) => s.validate_inner(value, errors),
             Integer(ref s) => s.validate_inner(value, errors),
         }
+    }
+
+    fn from_json(node: &JsonValue) -> Option<Schema> {
+        None
     }
 }
