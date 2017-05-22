@@ -150,13 +150,19 @@ impl<'schema> StringSchemaBuilder<'schema> {
     }
 }
 
-#[derive(Clone, Debug, Copy, PartialEq)]
+#[derive(Clone, Debug, Copy, PartialEq, Serialize, Deserialize)]
 pub enum Format {
+    #[serde(rename = "date-time")]
     DateTime,
+    #[serde(rename = "email")]
     Email,
+    #[serde(rename = "hostname")]
     Hostname,
+    #[serde(rename = "ipv4")]
     Ipv4,
+    #[serde(rename = "ipv6")]
     Ipv6,
+    #[serde(rename = "uri")]
     Uri,
 }
 

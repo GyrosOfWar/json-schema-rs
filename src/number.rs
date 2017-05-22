@@ -3,6 +3,7 @@ use serde_json::Value;
 use util::{JsonType, JsonValueExt};
 use errors::{ValidationError, ErrorReason};
 use schema::{Schema, SchemaBase};
+use de;
 
 #[derive(Clone, Debug, Default)]
 pub struct NumberSchema<'schema> {

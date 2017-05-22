@@ -50,7 +50,8 @@ pub enum Schema<'schema> {
 impl<'schema> From<de::Schema> for Schema<'schema> {
     fn from(schema: de::Schema) -> Schema<'schema> {
         match schema {
-            de::Schema::Number(_n) => unimplemented!()
+            de::Schema::Number(_n) => unimplemented!(),
+            de::Schema::String(_s) => unimplemented!()
         }
     }
 }
