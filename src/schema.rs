@@ -7,14 +7,13 @@ use array::ArraySchema;
 use object::ObjectSchema;
 use number::NumberSchema;
 use string::StringSchema;
+use de;
 
 pub trait SchemaBase {
     #[doc(hidden)]
     fn validate_inner<'json>(&self,
                              value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>);
-
-    fn from_json(node: &Value) -> Option<Schema>;
 
     fn validate<'json>(&self, value: &'json Value) -> Result<(), Vec<ValidationError<'json>>> {
         let mut errors = vec![];
@@ -32,11 +31,7 @@ pub trait SchemaBase {
 pub struct EmptySchema;
 
 impl SchemaBase for EmptySchema {
-    fn from_json(_node: &Value) -> Option<Schema> {
-        None
-    }
-
-    fn validate_inner<'json>(&self, value: &'json Value, errors: &mut Vec<ValidationError<'json>>) {
+    fn validate_inner<'json>(&self, _value: &'json Value, _errors: &mut Vec<ValidationError<'json>>) {
         
     }
 }
@@ -50,6 +45,14 @@ pub enum Schema<'schema> {
     String(StringSchema<'schema>),
     Integer(IntegerSchema<'schema>),
     Empty(EmptySchema),
+}
+
+impl<'schema> From<de::Schema> for Schema<'schema> {
+    fn from(schema: de::Schema) -> Schema<'schema> {
+        match schema {
+            de::Schema::Number(_n) => unimplemented!()
+        }
+    }
 }
 
 macro_rules! impl_traits {
@@ -84,9 +87,5 @@ impl<'schema> SchemaBase for Schema<'schema> {
             Integer(ref s) => s.validate_inner(value, errors),
             Empty(ref s) => s.validate_inner(value, errors),
         }
-    }
-
-    fn from_json(node: &Value) -> Option<Schema> {
-        None
     }
 }

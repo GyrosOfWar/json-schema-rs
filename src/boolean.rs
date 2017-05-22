@@ -1,7 +1,7 @@
 use serde_json::Value;
 
 use util::{JsonType, JsonValueExt};
-use schema::{SchemaBase, Schema};
+use schema::SchemaBase;
 use errors::{ValidationError, ErrorReason};
 
 #[derive(Clone, Debug)]
@@ -24,8 +24,5 @@ impl<'schema> SchemaBase for BooleanSchema<'schema> {
                 node: value,
             });
         }
-    }
-    fn from_json(node: &Value) -> Option<Schema> {
-        None
     }
 }

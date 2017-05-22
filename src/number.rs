@@ -73,10 +73,6 @@ impl<'schema> SchemaBase for NumberSchema<'schema> {
             })
         }
     }
-
-    fn from_json(node: &Value) -> Option<Schema> {
-        None
-    }
 }
 
 #[derive(Default)]
@@ -120,8 +116,6 @@ impl<'schema> NumberSchemaBuilder<'schema> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn range() {}
 }

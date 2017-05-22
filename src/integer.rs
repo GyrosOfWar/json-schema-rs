@@ -1,7 +1,7 @@
 use serde_json::Value;
 
 use util::{JsonType, JsonValueExt};
-use schema::{SchemaBase, Schema};
+use schema::SchemaBase;
 use errors::{ValidationError, ErrorReason};
 
 #[derive(Clone, Debug, Default)]
@@ -33,9 +33,5 @@ impl<'schema> SchemaBase for IntegerSchema<'schema> {
                 })
             }
         }
-    }
-
-    fn from_json(node: &Value) -> Option<Schema> {
-        None
     }
 }

@@ -146,10 +146,6 @@ impl<'schema> SchemaBase for ObjectSchema<'schema> {
             }
         }
     }
-
-    fn from_json(node: &Value) -> Option<Schema> {
-        None
-    }
 }
 
 #[derive(Debug, Clone)]
