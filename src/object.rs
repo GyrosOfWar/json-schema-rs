@@ -208,7 +208,7 @@ impl ObjectSchemaBuilder {
         self
     }
 
-    /// Set a map from property names to schemas. 
+    /// Set a map from property names to schemas.
     pub fn properties(mut self, value: HashMap<String, Schema>) -> Self {
         self.properties = Some(value.into());
         self

@@ -24,9 +24,9 @@ pub struct ArraySchema {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
-enum Items { 
+enum Items {
     List(Box<Schema>),
-    Tuple(Vec<Schema>)
+    Tuple(Vec<Schema>),
 }
 
 impl ArraySchema {
@@ -67,9 +67,9 @@ impl ArraySchema {
     }
 
     fn validate_items<'json>(&self,
-                                   array: &'json [Value],
-                                   parent: &'json Value,
-                                   errors: &mut Vec<ValidationError<'json>>) {
+                             array: &'json [Value],
+                             parent: &'json Value,
+                             errors: &mut Vec<ValidationError<'json>>) {
         if let Some(ref items) = self.items {
             match *items {
                 Items::Tuple(ref schemas) => {

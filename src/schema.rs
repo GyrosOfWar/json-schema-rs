@@ -1,8 +1,10 @@
-use serde_json::Value;
+use std::str::FromStr;
+
+use serde_json::{self, Value};
 
 use boolean::BooleanSchema;
 use integer::IntegerSchema;
-use errors::{ValidationError, ValidationErrors};
+use errors::{ValidationError, ValidationErrors, Error};
 use array::ArraySchema;
 use object::ObjectSchema;
 use number::NumberSchema;
@@ -15,7 +17,7 @@ pub trait SchemaBase {
                              value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>);
 
-    /// Validates a JSON value with this schema. 
+    /// Validates a JSON value with this schema.
     fn validate<'json>(&self, value: &'json Value) -> Result<(), ValidationErrors<'json>> {
         let mut errors = vec![];
         self.validate_inner(value, &mut errors);
@@ -65,6 +67,13 @@ pub enum Schema {
     Integer(IntegerSchema),
     /// The empty schema `{}`.
     Empty(EmptySchema),
+}
+
+impl FromStr for Schema {
+    type Err = Error;
+    fn from_str(s: &str) -> ::std::result::Result<Schema, Self::Err> {
+        serde_json::from_str(s).map_err(From::from)
+    }
 }
 
 macro_rules! impl_traits {

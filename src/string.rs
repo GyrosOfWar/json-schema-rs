@@ -195,7 +195,7 @@ pub enum Format {
     /// Date time format according to RFC 3339
     #[serde(rename = "date-time")]
     DateTime,
-    /// An email address 
+    /// An email address
     #[serde(rename = "email")]
     Email,
     /// A host name

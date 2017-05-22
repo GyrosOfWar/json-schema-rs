@@ -29,3 +29,4 @@ impl SchemaBase for BooleanSchema {
         }
     }
 }
+// TODO add builder struct

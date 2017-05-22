@@ -13,12 +13,13 @@ pub struct ValidationError<'json> {
 }
 
 impl<'json> ValidationError<'json> {
-    pub fn type_mismatch(node: &'json Value, expected: JsonType, found: JsonType) -> ValidationError<'json> {
+    pub fn type_mismatch(node: &'json Value,
+                         expected: JsonType,
+                         found: JsonType)
+                         -> ValidationError<'json> {
         ValidationError {
-            reason: ErrorKind::TypeMismatch { 
-                expected, found
-            },
-            node: node
+            reason: ErrorKind::TypeMismatch { expected, found },
+            node: node,
         }
     }
 }

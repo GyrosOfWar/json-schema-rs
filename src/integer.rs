@@ -4,7 +4,7 @@ use util::{JsonType, JsonValueExt};
 use schema::SchemaBase;
 use errors::{ValidationError, ErrorKind};
 
-/// Schema for integer values like `42`. 
+/// Schema for integer values like `42`.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(deny_unknown_fields)]
@@ -27,7 +27,7 @@ impl SchemaBase for IntegerSchema {
                              errors: &mut Vec<ValidationError<'json>>) {
         match value.get_type() {
             JsonType::Integer => {}
-            ty => errors.push(ValidationError::type_mismatch(value, JsonType::Integer, ty))
+            ty => errors.push(ValidationError::type_mismatch(value, JsonType::Integer, ty)),
         }
     }
 }
