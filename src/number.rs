@@ -3,8 +3,8 @@ use serde_json::Value;
 use util::{JsonType, JsonValueExt};
 use errors::{ValidationError, ErrorReason};
 use schema::{Schema, SchemaBase};
-use de;
 
+// TODO get rid of lifetimes?
 #[derive(Clone, Debug, Default)]
 pub struct NumberSchema<'schema> {
     description: Option<&'schema str>,

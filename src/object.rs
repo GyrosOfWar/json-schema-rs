@@ -313,12 +313,8 @@ mod tests {
         schema.validate(&input).unwrap();
     }
 
-    #[test]
-    fn test_big() {
-        use std::fs::File;
-        use std::io::prelude::*;
-
-        let vector = ArraySchemaBuilder::default()
+    fn canada_schema<'s>() -> Schema<'s> {
+     let vector = ArraySchemaBuilder::default()
             .item_schemas(vec![From::from(NumberSchema::default()),
                                From::from(NumberSchema::default())])
             .build();
@@ -340,16 +336,35 @@ mod tests {
                 .add_property("geometry", geometry)
                 .build())
             .build();
-        let schema = ObjectSchemaBuilder::default()
+        ObjectSchemaBuilder::default()
             .add_property("type", Schema::from(StringSchema::default()))
             .add_property("features", features)
-            .build();
+            .build()
+    }
+
+    #[test]
+    fn test_canada_small() {
+        use std::fs::File;
+        use std::io::prelude::*;
 
         let mut file = File::open("data/canada-small.json").unwrap();
         let mut source = String::new();
         file.read_to_string(&mut source).unwrap();
         let input = serde_json::from_str(&source).unwrap();
-        println!("{:#?}", schema);
+        let schema = canada_schema();
+        schema.validate(&input).unwrap();
+    }
+
+    #[test]
+    fn test_canada_big() {
+        use std::fs::File;
+        use std::io::prelude::*;
+
+        let mut file = File::open("data/canada.json").unwrap();
+        let mut source = String::new();
+        file.read_to_string(&mut source).unwrap();
+        let input = serde_json::from_str(&source).unwrap();
+        let schema = canada_schema();
         schema.validate(&input).unwrap();
     }
 }
