@@ -8,12 +8,14 @@ use object::ObjectSchema;
 use number::NumberSchema;
 use string::StringSchema;
 
+/// The trait that all schema types implement.
 pub trait SchemaBase {
     #[doc(hidden)]
     fn validate_inner<'json>(&self,
                              value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>);
 
+    /// Validates a JSON value with this schema. 
     fn validate<'json>(&self, value: &'json Value) -> Result<(), ValidationErrors<'json>> {
         let mut errors = vec![];
         self.validate_inner(value, &mut errors);
@@ -27,8 +29,10 @@ pub trait SchemaBase {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Copy)]
+#[doc(hidden)]
 pub struct EmptySchema;
 
+#[doc(hidden)]
 impl SchemaBase for EmptySchema {
     fn validate_inner<'json>(&self,
                              _value: &'json Value,
@@ -37,21 +41,29 @@ impl SchemaBase for EmptySchema {
     }
 }
 
+/// Enum representing the different types of schemas.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum Schema {
+    /// Boolean schema. `true` or `false`.
     #[serde(rename = "boolean")]
     Boolean(BooleanSchema),
+    /// A schema for a JSON object like `{"food": "noodles"}`
     #[serde(rename = "object")]
     Object(ObjectSchema),
+    /// A schema for a JSON array like `["noodles", "eggs", "bacon"]`
     #[serde(rename = "array")]
     Array(ArraySchema),
+    /// A schema for a JSON number, usually floating points like `3.14`.
     #[serde(rename = "number")]
     Number(NumberSchema),
+    /// A schema for a string, like `"food"`
     #[serde(rename = "string")]
     String(StringSchema),
+    /// A schem a for an integer like `42`.
     #[serde(rename = "integer")]
     Integer(IntegerSchema),
+    /// The empty schema `{}`.
     Empty(EmptySchema),
 }
 
@@ -74,6 +86,7 @@ impl_traits! { IntegerSchema, Schema::Integer }
 impl_traits! { EmptySchema, Schema::Empty }
 
 impl SchemaBase for Schema {
+    #[doc(hidden)]
     fn validate_inner<'json>(&self,
                              value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {

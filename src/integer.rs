@@ -4,8 +4,10 @@ use util::{JsonType, JsonValueExt};
 use schema::SchemaBase;
 use errors::{ValidationError, ErrorKind};
 
+/// Schema for integer values like `42`. 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[serde(deny_unknown_fields)]
 pub struct IntegerSchema {
     description: Option<String>,
     id: Option<String>,
@@ -19,20 +21,15 @@ pub struct IntegerSchema {
 }
 
 impl SchemaBase for IntegerSchema {
+    #[doc(hidden)]
     fn validate_inner<'json>(&self,
                              value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {
         match value.get_type() {
             JsonType::Integer => {}
-            ty => {
-                errors.push(ValidationError {
-                                reason: ErrorKind::TypeMismatch {
-                                    expected: JsonType::Integer,
-                                    found: ty,
-                                },
-                                node: value,
-                            })
-            }
+            ty => errors.push(ValidationError::type_mismatch(value, JsonType::Integer, ty))
         }
     }
 }
+
+// TODO make builder for schema

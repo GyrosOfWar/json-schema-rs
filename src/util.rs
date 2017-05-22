@@ -1,5 +1,4 @@
 use std::fmt;
-
 use serde_json::Value;
 
 pub trait JsonValueExt {

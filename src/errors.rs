@@ -6,12 +6,21 @@ use util::JsonType;
 use string::Format;
 use regex::Regex;
 
-pub type ValidationResult<'json> = ::std::result::Result<(), ValidationError<'json>>;
-
 #[derive(Debug)]
 pub struct ValidationError<'json> {
     pub reason: ErrorKind,
     pub node: &'json Value,
+}
+
+impl<'json> ValidationError<'json> {
+    pub fn type_mismatch(node: &'json Value, expected: JsonType, found: JsonType) -> ValidationError<'json> {
+        ValidationError {
+            reason: ErrorKind::TypeMismatch { 
+                expected, found
+            },
+            node: node
+        }
+    }
 }
 
 impl<'json> fmt::Display for ValidationError<'json> {
@@ -26,7 +35,7 @@ pub struct ValidationErrors<'json>(pub Vec<ValidationError<'json>>);
 impl<'json> fmt::Display for ValidationErrors<'json> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for error in &self.0 {
-            write!(f, "Error at {}: {}", error.node, error.reason)?;
+            write!(f, "Error at {}: {}\n", error.node, error.reason)?;
         }
         Ok(())
     }

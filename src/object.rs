@@ -8,14 +8,16 @@ use util::{JsonType, JsonValueExt};
 use schema::{Schema, SchemaBase};
 use errors::{ValidationError, ErrorKind};
 
+/// An object schema.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[serde(deny_unknown_fields)]
 pub struct ObjectSchema {
     description: Option<String>,
     id: Option<String>,
     title: Option<String>,
 
-    property_schemas: Option<HashMap<String, Schema>>,
+    properties: Option<HashMap<String, Schema>>,
     // TODO either object or bool
     additional_properties: Option<bool>,
     required: Option<Vec<String>>,
@@ -33,7 +35,7 @@ impl ObjectSchema {
                                   object: &'json Map<String, Value>,
                                   parent: &'json Value,
                                   errors: &mut Vec<ValidationError<'json>>) {
-        if let Some(ref schemas) = self.property_schemas {
+        if let Some(ref schemas) = self.properties {
             for (property, schema) in schemas {
                 match object.get(property) {
                     Some(value) => {
@@ -131,6 +133,7 @@ impl ObjectSchema {
 }
 
 impl SchemaBase for ObjectSchema {
+    #[doc(hidden)]
     fn validate_inner<'json>(&self,
                              value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {
@@ -154,13 +157,14 @@ impl SchemaBase for ObjectSchema {
     }
 }
 
+/// A builder object for an object schema.
 #[derive(Debug, Clone)]
 pub struct ObjectSchemaBuilder {
     description: Option<String>,
     id: Option<String>,
     title: Option<String>,
 
-    property_schemas: Option<HashMap<String, Schema>>,
+    properties: Option<HashMap<String, Schema>>,
     // TODO either object or bool
     additional_properties: bool,
     required: Option<Vec<String>>,
@@ -176,7 +180,7 @@ impl Default for ObjectSchemaBuilder {
             id: Default::default(),
             title: Default::default(),
 
-            property_schemas: Default::default(),
+            properties: Default::default(),
             additional_properties: true,
             required: Default::default(),
             min_properties: Default::default(),
@@ -187,39 +191,47 @@ impl Default for ObjectSchemaBuilder {
 }
 
 impl ObjectSchemaBuilder {
+    /// A longer description for this schema.
     pub fn description<V: Into<String>>(mut self, value: V) -> Self {
         self.description = Some(value.into());
         self
     }
-
+    /// A unique identifier for this schema
     pub fn id<V: Into<String>>(mut self, value: V) -> Self {
         self.id = Some(value.into());
         self
     }
 
+    /// A short description for this schema.
     pub fn title<V: Into<String>>(mut self, value: V) -> Self {
         self.title = Some(value.into());
         self
     }
 
-    pub fn property_schemas(mut self, value: HashMap<String, Schema>) -> Self {
-        self.property_schemas = Some(value.into());
+    /// Set a map from property names to schemas. 
+    pub fn properties(mut self, value: HashMap<String, Schema>) -> Self {
+        self.properties = Some(value.into());
         self
     }
 
+    /// The required properties are a set of property names (that must exist on this schema)
+    /// that are required to exist.
     pub fn required<V: Into<Vec<String>>>(mut self, value: V) -> Self {
         self.required = Some(value.into());
         self
     }
 
+    /// The `additional_properties` flag determines whether properties that aren't covered by
+    /// this schema are allowed or not.
     pub fn additional_properties(mut self, value: bool) -> Self {
         self.additional_properties = value;
         self
     }
 
+    /// Adds a property to this schema.
     pub fn add_property<K: Into<String>, V: Into<Schema>>(mut self, name: K, value: V) -> Self {
         let mut map;
-        match self.property_schemas {
+        match self.properties {
             Some(m) => {
                 map = m;
             }
@@ -228,17 +240,18 @@ impl ObjectSchemaBuilder {
             }
         }
         map.insert(name.into(), value.into());
-        self.property_schemas = Some(map);
+        self.properties = Some(map);
         self
     }
 
+    /// Finishes construction of the schema, yielding the finished `Schema`.
     pub fn build(self) -> Schema {
         From::from(ObjectSchema {
                        description: self.description,
                        id: self.id,
                        title: self.title,
 
-                       property_schemas: self.property_schemas,
+                       properties: self.properties,
                        additional_properties: Some(self.additional_properties),
                        required: self.required,
                        min_properties: self.min_properties,
@@ -317,7 +330,7 @@ mod tests {
         schemas.insert("color".into(), color);
 
         let schema = ObjectSchemaBuilder::default()
-            .property_schemas(schemas)
+            .properties(schemas)
             .additional_properties(false)
             .build();
 

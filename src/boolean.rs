@@ -6,6 +6,7 @@ use errors::{ValidationError, ErrorKind};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[serde(deny_unknown_fields)]
 pub struct BooleanSchema {
     description: Option<String>,
     id: Option<String>,
@@ -13,6 +14,7 @@ pub struct BooleanSchema {
 }
 
 impl SchemaBase for BooleanSchema {
+    #[doc(hidden)]
     fn validate_inner<'json>(&self,
                              value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {

@@ -1,0 +1,9 @@
+[package]
+name = "cli"
+version = "0.1.0"
+authors = ["Martin Tomasi <martin.tomasi@gmail.com>"]
+
+[dependencies]
+json_schema = { path = ".." }
+clap = "2.24.2"
+serde_json = "1.0"

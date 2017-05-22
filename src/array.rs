@@ -4,8 +4,10 @@ use util::{JsonType, JsonValueExt};
 use errors::{ValidationError, ErrorKind};
 use schema::{Schema, SchemaBase};
 
+/// Schema for JSON arrays like `[1, 2, 3]`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[serde(deny_unknown_fields)]
 pub struct ArraySchema {
     description: Option<String>,
     id: Option<String>,
@@ -15,10 +17,16 @@ pub struct ArraySchema {
     max_items: Option<usize>,
     unique_items: Option<bool>,
 
-    all_items_schema: Box<Option<Schema>>,
-    item_schemas: Option<Vec<Schema>>,
+    items: Option<Items>,
 
     additional_items: Option<bool>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+enum Items { 
+    List(Box<Schema>),
+    Tuple(Vec<Schema>)
 }
 
 impl ArraySchema {
@@ -58,33 +66,32 @@ impl ArraySchema {
         }
     }
 
-    fn validate_all_items_schema<'json>(&self,
-                                        array: &'json [Value],
-                                        errors: &mut Vec<ValidationError<'json>>) {
-        if let Some(ref schema) = *self.all_items_schema {
-            for value in array {
-                schema.validate_inner(value, errors);
-            }
-        }
-    }
-
-    fn validate_item_schema<'json>(&self,
+    fn validate_items<'json>(&self,
                                    array: &'json [Value],
                                    parent: &'json Value,
                                    errors: &mut Vec<ValidationError<'json>>) {
-        if let Some(ref schemas) = self.item_schemas {
-            if schemas.len() != array.len() && !self.additional_items() {
-                errors.push(ValidationError {
-                                reason: ErrorKind::TupleLengthMismatch {
-                                    schemas: schemas.len(),
-                                    tuple: array.len(),
-                                },
-                                node: parent,
-                            });
-            }
+        if let Some(ref items) = self.items {
+            match *items {
+                Items::Tuple(ref schemas) => {
+                    if schemas.len() != array.len() && !self.additional_items() {
+                        errors.push(ValidationError {
+                                        reason: ErrorKind::TupleLengthMismatch {
+                                            schemas: schemas.len(),
+                                            tuple: array.len(),
+                                        },
+                                        node: parent,
+                                    });
+                    }
 
-            for (schema, value) in schemas.iter().zip(array) {
-                schema.validate_inner(value, errors);
+                    for (schema, value) in schemas.iter().zip(array) {
+                        schema.validate_inner(value, errors);
+                    }
+                }
+                Items::List(ref schema) => {
+                    for value in array {
+                        schema.validate_inner(value, errors);
+                    }
+                }
             }
         }
     }
@@ -113,14 +120,14 @@ impl ArraySchema {
 
 
 impl SchemaBase for ArraySchema {
+    #[doc(hidden)]
     fn validate_inner<'json>(&self,
                              value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {
         match value {
             &Value::Array(ref array) => {
                 self.validate_size(array, value, errors);
-                self.validate_all_items_schema(array, errors);
-                self.validate_item_schema(array, value, errors);
+                self.validate_items(array, value, errors);
                 self.validate_unique(array, value, errors);
             }
             val => {
@@ -136,6 +143,7 @@ impl SchemaBase for ArraySchema {
     }
 }
 
+/// A builder for creating array schemas programatically.
 #[derive(Debug)]
 pub struct ArraySchemaBuilder {
     description: Option<String>,
@@ -146,9 +154,7 @@ pub struct ArraySchemaBuilder {
     max_items: Option<usize>,
     unique_items: bool,
 
-    all_items_schema: Box<Option<Schema>>,
-    item_schemas: Option<Vec<Schema>>,
-
+    items: Option<Items>,
     additional_items: bool,
 }
 
@@ -162,9 +168,7 @@ impl Default for ArraySchemaBuilder {
             min_items: None,
             max_items: None,
             unique_items: false,
-
-            all_items_schema: Default::default(),
-            item_schemas: Default::default(),
+            items: Default::default(),
 
             additional_items: true,
         }
@@ -203,12 +207,12 @@ impl ArraySchemaBuilder {
     }
 
     pub fn all_items_schema<V: Into<Schema>>(mut self, value: V) -> Self {
-        self.all_items_schema = Box::new(Some(value.into()));
+        self.items = Some(Items::List(Box::new(value.into())));
         self
     }
 
     pub fn item_schemas<V: Into<Vec<Schema>>>(mut self, value: V) -> Self {
-        self.item_schemas = Some(value.into());
+        self.items = Some(Items::Tuple(value.into()));
         self
     }
 
@@ -227,9 +231,7 @@ impl ArraySchemaBuilder {
                        max_items: self.max_items,
                        unique_items: Some(self.unique_items),
 
-                       all_items_schema: self.all_items_schema,
-                       item_schemas: self.item_schemas,
-
+                       items: self.items,
                        additional_items: Some(self.additional_items),
                    })
     }

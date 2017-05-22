@@ -33,6 +33,7 @@ mod regex_serde {
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[serde(deny_unknown_fields)]
 pub struct StringSchema {
     description: Option<String>,
     id: Option<String>,
@@ -40,8 +41,7 @@ pub struct StringSchema {
 
     min_length: Option<usize>,
     max_length: Option<usize>,
-    #[serde(with = "regex_serde")]
-    pattern: Option<Regex>,
+    pattern: Option<String>,
     format: Option<Format>,
 }
 
@@ -84,17 +84,28 @@ impl StringSchema {
         }
 
         if let Some(ref re) = self.pattern {
-            if !re.is_match(value) {
-                errors.push(ValidationError {
-                                reason: ErrorKind::RegexMismatch { regex: re.clone() },
-                                node: node,
-                            })
+            match Regex::new(re) {
+                Ok(re) => {
+                    if !re.is_match(value) {
+                        errors.push(ValidationError {
+                                        reason: ErrorKind::RegexMismatch { regex: re.clone() },
+                                        node: node,
+                                    })
+                    }
+                }
+                Err(e) => {
+                    errors.push(ValidationError {
+                                    reason: ErrorKind::InvalidRegex(re.clone()),
+                                    node: node,
+                                })
+                }
             }
         }
     }
 }
 
 impl SchemaBase for StringSchema {
+    #[doc(hidden)]
     fn validate_inner<'json>(&self,
                              value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {
@@ -123,7 +134,7 @@ pub struct StringSchemaBuilder {
 
     min_length: Option<usize>,
     max_length: Option<usize>,
-    pattern: Option<Regex>,
+    pattern: Option<String>,
     format: Option<Format>,
 }
 
@@ -154,7 +165,7 @@ impl StringSchemaBuilder {
         self
     }
 
-    pub fn pattern(mut self, pattern: Regex) -> Self {
+    pub fn pattern(mut self, pattern: String) -> Self {
         self.pattern = Some(pattern);
         self
     }
@@ -178,24 +189,31 @@ impl StringSchemaBuilder {
     }
 }
 
+/// Checking the string's contents according to a given format.
 #[derive(Clone, Debug, Copy, PartialEq, Serialize, Deserialize)]
 pub enum Format {
+    /// Date time format according to RFC 3339
     #[serde(rename = "date-time")]
     DateTime,
+    /// An email address 
     #[serde(rename = "email")]
     Email,
+    /// A host name
     #[serde(rename = "hostname")]
     Hostname,
+    /// An IPv4 address
     #[serde(rename = "ipv4")]
     Ipv4,
+    /// An IPv6 address
     #[serde(rename = "ipv6")]
     Ipv6,
+    /// A URI
     #[serde(rename = "uri")]
     Uri,
 }
 
 impl Format {
-    pub fn is_valid(&self, input: &str) -> bool {
+    fn is_valid(&self, input: &str) -> bool {
         match *self {
             Format::DateTime => DateTime::parse_from_rfc3339(input).is_ok(),
             Format::Uri => Url::parse(input).is_ok(),

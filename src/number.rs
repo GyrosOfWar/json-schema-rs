@@ -6,6 +6,7 @@ use schema::{Schema, SchemaBase};
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[serde(deny_unknown_fields)]
 pub struct NumberSchema {
     description: Option<String>,
     id: Option<String>,
@@ -67,6 +68,7 @@ impl NumberSchema {
 }
 
 impl SchemaBase for NumberSchema {
+    #[doc(hidden)]
     fn validate_inner<'json>(&self,
                              value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {
