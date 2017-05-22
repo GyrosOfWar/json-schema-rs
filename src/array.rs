@@ -1,26 +1,35 @@
 use serde_json::Value;
 
 use util::{JsonType, JsonValueExt};
-use errors::{ValidationError, ErrorReason};
+use errors::{ValidationError, ErrorKind};
 use schema::{Schema, SchemaBase};
 
-#[derive(Clone, Debug)]
-pub struct ArraySchema<'schema> {
-    description: Option<&'schema str>,
-    id: Option<&'schema str>,
-    title: Option<&'schema str>,
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ArraySchema {
+    description: Option<String>,
+    id: Option<String>,
+    title: Option<String>,
 
     min_items: Option<usize>,
     max_items: Option<usize>,
-    unique_items: bool,
+    unique_items: Option<bool>,
 
-    all_items_schema: Box<Option<Schema<'schema>>>,
-    item_schemas: Option<Vec<Schema<'schema>>>,
+    all_items_schema: Box<Option<Schema>>,
+    item_schemas: Option<Vec<Schema>>,
 
-    additional_items: bool,
+    additional_items: Option<bool>,
 }
 
-impl<'schema> ArraySchema<'schema> {
+impl ArraySchema {
+    fn additional_items(&self) -> bool {
+        self.additional_items.unwrap_or(false)
+    }
+
+    fn unique_items(&self) -> bool {
+        self.unique_items.unwrap_or(false)
+    }
+
     fn validate_size<'json>(&self,
                             array: &'json [Value],
                             parent: &'json Value,
@@ -28,23 +37,23 @@ impl<'schema> ArraySchema<'schema> {
         if let Some(min) = self.min_items {
             if array.len() < min {
                 errors.push(ValidationError {
-                    reason: ErrorReason::MinLength {
-                        expected: min,
-                        found: array.len(),
-                    },
-                    node: parent,
-                });
+                                reason: ErrorKind::MinLength {
+                                    expected: min,
+                                    found: array.len(),
+                                },
+                                node: parent,
+                            });
             }
         }
         if let Some(max) = self.max_items {
             if array.len() > max {
                 errors.push(ValidationError {
-                    reason: ErrorReason::MaxLength {
-                        expected: max,
-                        found: array.len(),
-                    },
-                    node: parent,
-                });
+                                reason: ErrorKind::MaxLength {
+                                    expected: max,
+                                    found: array.len(),
+                                },
+                                node: parent,
+                            });
             }
         }
     }
@@ -54,7 +63,7 @@ impl<'schema> ArraySchema<'schema> {
                                         errors: &mut Vec<ValidationError<'json>>) {
         if let Some(ref schema) = *self.all_items_schema {
             for value in array {
-                schema.validate_inner(&value, errors);
+                schema.validate_inner(value, errors);
             }
         }
     }
@@ -64,14 +73,14 @@ impl<'schema> ArraySchema<'schema> {
                                    parent: &'json Value,
                                    errors: &mut Vec<ValidationError<'json>>) {
         if let Some(ref schemas) = self.item_schemas {
-            if schemas.len() != array.len() && !self.additional_items {
+            if schemas.len() != array.len() && !self.additional_items() {
                 errors.push(ValidationError {
-                    reason: ErrorReason::TupleLengthMismatch {
-                        schemas: schemas.len(),
-                        tuple: array.len(),
-                    },
-                    node: parent,
-                });
+                                reason: ErrorKind::TupleLengthMismatch {
+                                    schemas: schemas.len(),
+                                    tuple: array.len(),
+                                },
+                                node: parent,
+                            });
             }
 
             for (schema, value) in schemas.iter().zip(array) {
@@ -84,15 +93,15 @@ impl<'schema> ArraySchema<'schema> {
                               array: &'json [Value],
                               parent: &'json Value,
                               errors: &mut Vec<ValidationError<'json>>) {
-        if self.unique_items {
+        if self.unique_items() {
             let mut unique_items = vec![];
             for item in array {
                 for contained in &unique_items {
                     if *contained == item {
                         errors.push(ValidationError {
-                            node: parent,
-                            reason: ErrorReason::ArrayItemNotUnique,
-                        });
+                                        node: parent,
+                                        reason: ErrorKind::ArrayItemNotUnique,
+                                    });
                         return;
                     }
                 }
@@ -103,7 +112,7 @@ impl<'schema> ArraySchema<'schema> {
 }
 
 
-impl<'schema> SchemaBase for ArraySchema<'schema> {
+impl SchemaBase for ArraySchema {
     fn validate_inner<'json>(&self,
                              value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {
@@ -116,35 +125,35 @@ impl<'schema> SchemaBase for ArraySchema<'schema> {
             }
             val => {
                 errors.push(ValidationError {
-                    reason: ErrorReason::TypeMismatch {
-                        expected: JsonType::Array,
-                        found: val.get_type(),
-                    },
-                    node: value,
-                })
+                                reason: ErrorKind::TypeMismatch {
+                                    expected: JsonType::Array,
+                                    found: val.get_type(),
+                                },
+                                node: value,
+                            })
             }
         }
     }
 }
 
 #[derive(Debug)]
-pub struct ArraySchemaBuilder<'schema> {
-    description: Option<&'schema str>,
-    id: Option<&'schema str>,
-    title: Option<&'schema str>,
+pub struct ArraySchemaBuilder {
+    description: Option<String>,
+    id: Option<String>,
+    title: Option<String>,
 
     min_items: Option<usize>,
     max_items: Option<usize>,
     unique_items: bool,
 
-    all_items_schema: Box<Option<Schema<'schema>>>,
-    item_schemas: Option<Vec<Schema<'schema>>>,
+    all_items_schema: Box<Option<Schema>>,
+    item_schemas: Option<Vec<Schema>>,
 
     additional_items: bool,
 }
 
-impl<'schema> Default for ArraySchemaBuilder<'schema> {
-    fn default() -> ArraySchemaBuilder<'schema> {
+impl Default for ArraySchemaBuilder {
+    fn default() -> ArraySchemaBuilder {
         ArraySchemaBuilder {
             description: None,
             id: None,
@@ -162,18 +171,18 @@ impl<'schema> Default for ArraySchemaBuilder<'schema> {
     }
 }
 
-impl<'schema> ArraySchemaBuilder<'schema> {
-    pub fn description<V: Into<&'schema str>>(mut self, value: V) -> Self {
+impl ArraySchemaBuilder {
+    pub fn description<V: Into<String>>(mut self, value: V) -> Self {
         self.description = Some(value.into());
         self
     }
 
-    pub fn id<V: Into<&'schema str>>(mut self, value: V) -> Self {
+    pub fn id<V: Into<String>>(mut self, value: V) -> Self {
         self.id = Some(value.into());
         self
     }
 
-    pub fn title<V: Into<&'schema str>>(mut self, value: V) -> Self {
+    pub fn title<V: Into<String>>(mut self, value: V) -> Self {
         self.title = Some(value.into());
         self
     }
@@ -193,12 +202,12 @@ impl<'schema> ArraySchemaBuilder<'schema> {
         self
     }
 
-    pub fn all_items_schema<V: Into<Schema<'schema>>>(mut self, value: V) -> Self {
+    pub fn all_items_schema<V: Into<Schema>>(mut self, value: V) -> Self {
         self.all_items_schema = Box::new(Some(value.into()));
         self
     }
 
-    pub fn item_schemas<V: Into<Vec<Schema<'schema>>>>(mut self, value: V) -> Self {
+    pub fn item_schemas<V: Into<Vec<Schema>>>(mut self, value: V) -> Self {
         self.item_schemas = Some(value.into());
         self
     }
@@ -208,21 +217,21 @@ impl<'schema> ArraySchemaBuilder<'schema> {
         self
     }
 
-    pub fn build(self) -> Schema<'schema> {
+    pub fn build(self) -> Schema {
         From::from(ArraySchema {
-            description: self.description,
-            id: self.id,
-            title: self.title,
+                       description: self.description,
+                       id: self.id,
+                       title: self.title,
 
-            min_items: self.min_items,
-            max_items: self.max_items,
-            unique_items: self.unique_items,
+                       min_items: self.min_items,
+                       max_items: self.max_items,
+                       unique_items: Some(self.unique_items),
 
-            all_items_schema: self.all_items_schema,
-            item_schemas: self.item_schemas,
+                       all_items_schema: self.all_items_schema,
+                       item_schemas: self.item_schemas,
 
-            additional_items: self.additional_items,
-        })
+                       additional_items: Some(self.additional_items),
+                   })
     }
 }
 
@@ -235,14 +244,12 @@ mod tests {
 
     #[test]
     fn unique_elements() {
-        let schema = ArraySchemaBuilder::default()
-            .unique_items(true)
-            .build();
+        let schema = ArraySchemaBuilder::default().unique_items(true).build();
         let input = serde_json::from_str("[1, 1, 2, 3, 4]").unwrap();
         let mut errors = vec![];
         schema.validate_inner(&input, &mut errors);
         assert_eq!(errors.len(), 1);
-        if let ErrorReason::ArrayItemNotUnique = errors[0].reason {
+        if let ErrorKind::ArrayItemNotUnique = errors[0].reason {
 
         } else {
             assert!(false, "Wrong error reason");
@@ -272,7 +279,7 @@ mod tests {
         schema.validate_inner(&input, &mut errors);
         assert_eq!(errors.len(), 2);
         assert_eq!(*errors[0].node, input[0]);
-        if let ErrorReason::NumberRange { value, bound } = errors[1].reason {
+        if let ErrorKind::NumberRange { value, bound } = errors[1].reason {
             assert_eq!(value, 2.5);
             assert_eq!(bound, 2.0);
         } else {

@@ -2,22 +2,23 @@ use serde_json::Value;
 
 use util::{JsonType, JsonValueExt};
 use schema::SchemaBase;
-use errors::{ValidationError, ErrorReason};
+use errors::{ValidationError, ErrorKind};
 
-#[derive(Clone, Debug, Default)]
-pub struct IntegerSchema<'schema> {
-    description: Option<&'schema str>,
-    id: Option<&'schema str>,
-    title: Option<&'schema str>,
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct IntegerSchema {
+    description: Option<String>,
+    id: Option<String>,
+    title: Option<String>,
 
     multiple_of: Option<f64>,
     minimum: Option<f64>,
     maximum: Option<f64>,
-    exclusive_minimum: bool,
-    exclusive_maximum: bool,
+    exclusive_minimum: Option<bool>,
+    exclusive_maximum: Option<bool>,
 }
 
-impl<'schema> SchemaBase for IntegerSchema<'schema> {
+impl SchemaBase for IntegerSchema {
     fn validate_inner<'json>(&self,
                              value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {
@@ -25,12 +26,12 @@ impl<'schema> SchemaBase for IntegerSchema<'schema> {
             JsonType::Integer => {}
             ty => {
                 errors.push(ValidationError {
-                    reason: ErrorReason::TypeMismatch {
-                        expected: JsonType::Integer,
-                        found: ty,
-                    },
-                    node: value,
-                })
+                                reason: ErrorKind::TypeMismatch {
+                                    expected: JsonType::Integer,
+                                    found: ty,
+                                },
+                                node: value,
+                            })
             }
         }
     }

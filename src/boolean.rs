@@ -2,27 +2,28 @@ use serde_json::Value;
 
 use util::{JsonType, JsonValueExt};
 use schema::SchemaBase;
-use errors::{ValidationError, ErrorReason};
+use errors::{ValidationError, ErrorKind};
 
-#[derive(Clone, Debug)]
-pub struct BooleanSchema<'schema> {
-    description: Option<&'schema str>,
-    id: Option<&'schema str>,
-    title: Option<&'schema str>,
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BooleanSchema {
+    description: Option<String>,
+    id: Option<String>,
+    title: Option<String>,
 }
 
-impl<'schema> SchemaBase for BooleanSchema<'schema> {
+impl SchemaBase for BooleanSchema {
     fn validate_inner<'json>(&self,
                              value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {
         if !value.is_boolean() {
             errors.push(ValidationError {
-                reason: ErrorReason::TypeMismatch {
-                    expected: JsonType::Boolean,
-                    found: value.get_type(),
-                },
-                node: value,
-            });
+                            reason: ErrorKind::TypeMismatch {
+                                expected: JsonType::Boolean,
+                                found: value.get_type(),
+                            },
+                            node: value,
+                        });
         }
     }
 }

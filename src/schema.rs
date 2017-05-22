@@ -2,12 +2,11 @@ use serde_json::Value;
 
 use boolean::BooleanSchema;
 use integer::IntegerSchema;
-use errors::ValidationError;
+use errors::{ValidationError, ValidationErrors};
 use array::ArraySchema;
 use object::ObjectSchema;
 use number::NumberSchema;
 use string::StringSchema;
-use de;
 
 pub trait SchemaBase {
     #[doc(hidden)]
@@ -15,66 +14,66 @@ pub trait SchemaBase {
                              value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>);
 
-    fn validate<'json>(&self, value: &'json Value) -> Result<(), Vec<ValidationError<'json>>> {
+    fn validate<'json>(&self, value: &'json Value) -> Result<(), ValidationErrors<'json>> {
         let mut errors = vec![];
         self.validate_inner(value, &mut errors);
 
-        if errors.len() == 0 {
+        if errors.is_empty() {
             Ok(())
         } else {
-            Err(errors)
+            Err(ValidationErrors(errors))
         }
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize, Copy)]
 pub struct EmptySchema;
 
 impl SchemaBase for EmptySchema {
-    fn validate_inner<'json>(&self, _value: &'json Value, _errors: &mut Vec<ValidationError<'json>>) {
-        
+    fn validate_inner<'json>(&self,
+                             _value: &'json Value,
+                             _errors: &mut Vec<ValidationError<'json>>) {
+
     }
 }
 
-#[derive(Clone, Debug)]
-pub enum Schema<'schema> {
-    Boolean(BooleanSchema<'schema>),
-    Object(ObjectSchema<'schema>),
-    Array(ArraySchema<'schema>),
-    Number(NumberSchema<'schema>),
-    String(StringSchema<'schema>),
-    Integer(IntegerSchema<'schema>),
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum Schema {
+    #[serde(rename = "boolean")]
+    Boolean(BooleanSchema),
+    #[serde(rename = "object")]
+    Object(ObjectSchema),
+    #[serde(rename = "array")]
+    Array(ArraySchema),
+    #[serde(rename = "number")]
+    Number(NumberSchema),
+    #[serde(rename = "string")]
+    String(StringSchema),
+    #[serde(rename = "integer")]
+    Integer(IntegerSchema),
     Empty(EmptySchema),
-}
-
-impl<'schema> From<de::Schema> for Schema<'schema> {
-    fn from(schema: de::Schema) -> Schema<'schema> {
-        match schema {
-            de::Schema::Number(_n) => unimplemented!(),
-            de::Schema::String(_s) => unimplemented!()
-        }
-    }
 }
 
 macro_rules! impl_traits {
     ($name:ty, $schema:path) => (
-        impl <'schema> From<$name> for Schema<'schema> {
-            fn from(value: $name) -> Schema<'schema> {
+        impl  From<$name> for Schema {
+            fn from(value: $name) -> Schema {
                 $schema(value)
             }
         }
     )
 }
 
-impl_traits! { BooleanSchema<'schema>, Schema::Boolean }
-impl_traits! { ObjectSchema<'schema>, Schema::Object }
-impl_traits! { ArraySchema<'schema>, Schema::Array }
-impl_traits! { NumberSchema<'schema>, Schema::Number }
-impl_traits! { StringSchema<'schema>, Schema::String }
-impl_traits! { IntegerSchema<'schema>, Schema::Integer }
+impl_traits! { BooleanSchema, Schema::Boolean }
+impl_traits! { ObjectSchema, Schema::Object }
+impl_traits! { ArraySchema, Schema::Array }
+impl_traits! { NumberSchema, Schema::Number }
+impl_traits! { StringSchema, Schema::String }
+impl_traits! { IntegerSchema, Schema::Integer }
 impl_traits! { EmptySchema, Schema::Empty }
 
-impl<'schema> SchemaBase for Schema<'schema> {
+impl SchemaBase for Schema {
     fn validate_inner<'json>(&self,
                              value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {

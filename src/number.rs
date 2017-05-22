@@ -1,31 +1,39 @@
 use serde_json::Value;
 
 use util::{JsonType, JsonValueExt};
-use errors::{ValidationError, ErrorReason};
+use errors::{ValidationError, ErrorKind};
 use schema::{Schema, SchemaBase};
 
-// TODO get rid of lifetimes?
-#[derive(Clone, Debug, Default)]
-pub struct NumberSchema<'schema> {
-    description: Option<&'schema str>,
-    id: Option<&'schema str>,
-    title: Option<&'schema str>,
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NumberSchema {
+    description: Option<String>,
+    id: Option<String>,
+    title: Option<String>,
 
     multiple_of: Option<f64>,
     minimum: Option<f64>,
     maximum: Option<f64>,
-    exclusive_minimum: bool,
-    exclusive_maximum: bool,
+    exclusive_minimum: Option<bool>,
+    exclusive_maximum: Option<bool>,
 }
 
-impl<'schema> NumberSchema<'schema> {
+impl NumberSchema {
+    fn exclusive_maximum(&self) -> bool {
+        self.exclusive_maximum.unwrap_or(false)
+    }
+
+    fn exclusive_minimum(&self) -> bool {
+        self.exclusive_minimum.unwrap_or(false)
+    }
+
     fn validate_range<'json>(&self,
                              node: &'json Value,
                              value: f64,
                              errors: &mut Vec<ValidationError<'json>>) {
         let mut bound = None;
         if let Some(min) = self.minimum {
-            let out_of_bounds = if self.exclusive_minimum {
+            let out_of_bounds = if self.exclusive_minimum() {
                 value < min
             } else {
                 value <= min
@@ -36,7 +44,7 @@ impl<'schema> NumberSchema<'schema> {
         }
 
         if let Some(max) = self.maximum {
-            let out_of_bounds = if self.exclusive_maximum {
+            let out_of_bounds = if self.exclusive_maximum() {
                 value > max
             } else {
                 value >= max
@@ -48,39 +56,39 @@ impl<'schema> NumberSchema<'schema> {
 
         if let Some(b) = bound {
             errors.push(ValidationError {
-                reason: ErrorReason::NumberRange {
-                    bound: b,
-                    value: value,
-                },
-                node: node,
-            })
+                            reason: ErrorKind::NumberRange {
+                                bound: b,
+                                value: value,
+                            },
+                            node: node,
+                        })
         }
     }
 }
 
-impl<'schema> SchemaBase for NumberSchema<'schema> {
+impl SchemaBase for NumberSchema {
     fn validate_inner<'json>(&self,
                              value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {
-        if let &Value::Number(_) = value {
+        if let Value::Number(_) = *value {
             self.validate_range(value, value.as_f64().unwrap(), errors);
         } else {
             errors.push(ValidationError {
-                reason: ErrorReason::TypeMismatch {
-                    expected: JsonType::Number,
-                    found: value.get_type(),
-                },
-                node: value,
-            })
+                            reason: ErrorKind::TypeMismatch {
+                                expected: JsonType::Number,
+                                found: value.get_type(),
+                            },
+                            node: value,
+                        })
         }
     }
 }
 
-#[derive(Default)]
-pub struct NumberSchemaBuilder<'schema> {
-    description: Option<&'schema str>,
-    id: Option<&'schema str>,
-    title: Option<&'schema str>,
+#[derive(Default, Debug)]
+pub struct NumberSchemaBuilder {
+    description: Option<String>,
+    id: Option<String>,
+    title: Option<String>,
 
     multiple_of: Option<f64>,
     minimum: Option<f64>,
@@ -89,7 +97,7 @@ pub struct NumberSchemaBuilder<'schema> {
     exclusive_maximum: bool,
 }
 
-impl<'schema> NumberSchemaBuilder<'schema> {
+impl NumberSchemaBuilder {
     pub fn minimum(mut self, value: f64) -> Self {
         self.minimum = Some(value);
         self
@@ -100,18 +108,18 @@ impl<'schema> NumberSchemaBuilder<'schema> {
         self
     }
 
-    pub fn build(self) -> Schema<'schema> {
+    pub fn build(self) -> Schema {
         From::from(NumberSchema {
-            description: self.description,
-            id: self.id,
-            title: self.title,
+                       description: self.description,
+                       id: self.id,
+                       title: self.title,
 
-            multiple_of: self.multiple_of,
-            minimum: self.minimum,
-            maximum: self.maximum,
-            exclusive_minimum: self.exclusive_minimum,
-            exclusive_maximum: self.exclusive_maximum,
-        })
+                       multiple_of: self.multiple_of,
+                       minimum: self.minimum,
+                       maximum: self.maximum,
+                       exclusive_minimum: Some(self.exclusive_minimum),
+                       exclusive_maximum: Some(self.exclusive_maximum),
+                   })
     }
 }
 

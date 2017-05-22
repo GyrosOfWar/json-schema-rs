@@ -1,24 +1,51 @@
+use std::net::{Ipv4Addr, Ipv6Addr};
+
 use regex::Regex;
 use serde_json::Value;
 use chrono::prelude::*;
+use url::Url;
 
 use util::{JsonType, JsonValueExt};
 use schema::{SchemaBase, Schema};
-use errors::{ValidationError, ErrorReason};
+use errors::{ValidationError, ErrorKind};
 
-#[derive(Clone, Debug, Default)]
-pub struct StringSchema<'schema> {
-    description: Option<&'schema str>,
-    id: Option<&'schema str>,
-    title: Option<&'schema str>,
+mod regex_serde {
+    use serde::{self, Deserialize, Serializer, Deserializer};
+    use regex::Regex;
+
+    pub fn serialize<S>(regex: &Option<Regex>, serializer: S) -> Result<S::Ok, S::Error>
+        where S: Serializer
+    {
+        match *regex {
+            Some(ref r) => serializer.serialize_str(r.as_str()),
+            None => serializer.serialize_none(),
+        }
+    }
+
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
+        where D: Deserializer<'de>
+    {
+        let s = String::deserialize(deserializer)?;
+        Regex::new(&s).map_err(serde::de::Error::custom).map(Some)
+    }
+}
+
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StringSchema {
+    description: Option<String>,
+    id: Option<String>,
+    title: Option<String>,
 
     min_length: Option<usize>,
     max_length: Option<usize>,
+    #[serde(with = "regex_serde")]
     pattern: Option<Regex>,
     format: Option<Format>,
 }
 
-impl<'schema> StringSchema<'schema> {
+impl StringSchema {
     fn validate_string<'json>(&self,
                               value: &'json str,
                               node: &'json Value,
@@ -26,48 +53,48 @@ impl<'schema> StringSchema<'schema> {
         if let Some(format) = self.format {
             if !format.is_valid(value) {
                 errors.push(ValidationError {
-                    reason: ErrorReason::InvalidFormat(format),
-                    node: node,
-                })
+                                reason: ErrorKind::InvalidFormat(format),
+                                node: node,
+                            })
             }
         }
 
         if let Some(min) = self.min_length {
             if value.len() < min {
                 errors.push(ValidationError {
-                    reason: ErrorReason::MinLength {
-                        expected: min,
-                        found: value.len(),
-                    },
-                    node: node,
-                })
+                                reason: ErrorKind::MinLength {
+                                    expected: min,
+                                    found: value.len(),
+                                },
+                                node: node,
+                            })
             }
         }
 
         if let Some(max) = self.max_length {
             if value.len() > max {
                 errors.push(ValidationError {
-                    reason: ErrorReason::MinLength {
-                        expected: max,
-                        found: value.len(),
-                    },
-                    node: node,
-                })
+                                reason: ErrorKind::MinLength {
+                                    expected: max,
+                                    found: value.len(),
+                                },
+                                node: node,
+                            })
             }
         }
 
         if let Some(ref re) = self.pattern {
             if !re.is_match(value) {
                 errors.push(ValidationError {
-                    reason: ErrorReason::RegexMismatch { regex: re.clone() },
-                    node: node,
-                })
+                                reason: ErrorKind::RegexMismatch { regex: re.clone() },
+                                node: node,
+                            })
             }
         }
     }
 }
 
-impl<'schema> SchemaBase for StringSchema<'schema> {
+impl SchemaBase for StringSchema {
     fn validate_inner<'json>(&self,
                              value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {
@@ -77,22 +104,22 @@ impl<'schema> SchemaBase for StringSchema<'schema> {
             }
             _ => {
                 errors.push(ValidationError {
-                    reason: ErrorReason::TypeMismatch {
-                        expected: JsonType::String,
-                        found: value.get_type(),
-                    },
-                    node: value,
-                });
+                                reason: ErrorKind::TypeMismatch {
+                                    expected: JsonType::String,
+                                    found: value.get_type(),
+                                },
+                                node: value,
+                            });
             }
         }
     }
 }
 
 #[derive(Clone, Debug, Default)]
-pub struct StringSchemaBuilder<'schema> {
-    description: Option<&'schema str>,
-    id: Option<&'schema str>,
-    title: Option<&'schema str>,
+pub struct StringSchemaBuilder {
+    description: Option<String>,
+    id: Option<String>,
+    title: Option<String>,
 
     min_length: Option<usize>,
     max_length: Option<usize>,
@@ -100,18 +127,19 @@ pub struct StringSchemaBuilder<'schema> {
     format: Option<Format>,
 }
 
-impl<'schema> StringSchemaBuilder<'schema> {
-    pub fn description<V: Into<&'schema str>>(mut self, value: V) -> Self {
+#[allow(unused)]
+impl StringSchemaBuilder {
+    pub fn description<V: Into<String>>(mut self, value: V) -> Self {
         self.description = Some(value.into());
         self
     }
 
-    pub fn id<V: Into<&'schema str>>(mut self, value: V) -> Self {
+    pub fn id<V: Into<String>>(mut self, value: V) -> Self {
         self.id = Some(value.into());
         self
     }
 
-    pub fn title<V: Into<&'schema str>>(mut self, value: V) -> Self {
+    pub fn title<V: Into<String>>(mut self, value: V) -> Self {
         self.title = Some(value.into());
         self
     }
@@ -136,17 +164,17 @@ impl<'schema> StringSchemaBuilder<'schema> {
         self
     }
 
-    pub fn build(self) -> Schema<'schema> {
+    pub fn build(self) -> Schema {
         Schema::from(StringSchema {
-            description: self.description,
-            id: self.id,
-            title: self.title,
+                         description: self.description,
+                         id: self.id,
+                         title: self.title,
 
-            min_length: self.min_length,
-            max_length: self.max_length,
-            pattern: self.pattern,
-            format: self.format,
-        })
+                         min_length: self.min_length,
+                         max_length: self.max_length,
+                         pattern: self.pattern,
+                         format: self.format,
+                     })
     }
 }
 
@@ -170,6 +198,9 @@ impl Format {
     pub fn is_valid(&self, input: &str) -> bool {
         match *self {
             Format::DateTime => DateTime::parse_from_rfc3339(input).is_ok(),
+            Format::Uri => Url::parse(input).is_ok(),
+            Format::Ipv4 => input.parse::<Ipv4Addr>().is_ok(),
+            Format::Ipv6 => input.parse::<Ipv6Addr>().is_ok(),
             _ => true,
         }
     }
@@ -182,28 +213,38 @@ mod tests {
 
     #[test]
     fn string_len() {
-        let schema = StringSchemaBuilder::default().min_length(5).max_length(10).build();
+        let schema = StringSchemaBuilder::default()
+            .min_length(5)
+            .max_length(10)
+            .build();
         let input = serde_json::from_str(r#" "123455" "#).unwrap();
         schema.validate(&input).unwrap();
     }
 
     #[test]
     fn wrong_string_len() {
-        let schema = StringSchemaBuilder::default().min_length(5).max_length(10).build();
+        let schema = StringSchemaBuilder::default()
+            .min_length(5)
+            .max_length(10)
+            .build();
         let input = serde_json::from_str(r#" "123" "#).unwrap();
         assert!(schema.validate(&input).is_err());
     }
 
     #[test]
     fn date_format() {
-        let schema = StringSchemaBuilder::default().format(Format::DateTime).build();
+        let schema = StringSchemaBuilder::default()
+            .format(Format::DateTime)
+            .build();
         let input = serde_json::from_str(r#" "1990-12-31T23:59:60Z" "#).unwrap();
         schema.validate(&input).unwrap();
     }
 
     #[test]
     fn wrong_date_format() {
-        let schema = StringSchemaBuilder::default().format(Format::DateTime).build();
+        let schema = StringSchemaBuilder::default()
+            .format(Format::DateTime)
+            .build();
         let input = serde_json::from_str(r#" "1990-12-31T23:59:60" "#).unwrap();
         assert!(schema.validate(&input).is_err());
     }
