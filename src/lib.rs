@@ -2,7 +2,7 @@
 #![cfg_attr(feature="clippy", feature(plugin))]
 #![cfg_attr(feature="clippy", plugin(clippy))]
 
-extern crate json;
+extern crate serde_json;
 extern crate regex;
 extern crate chrono;
 #[macro_use]

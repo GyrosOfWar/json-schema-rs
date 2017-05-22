@@ -1,5 +1,5 @@
 use regex::Regex;
-use json::JsonValue;
+use serde_json::Value;
 use chrono::prelude::*;
 
 use util::{JsonType, JsonValueExt};
@@ -21,7 +21,7 @@ pub struct StringSchema<'schema> {
 impl<'schema> StringSchema<'schema> {
     fn validate_string<'json>(&self,
                               value: &'json str,
-                              node: &'json JsonValue,
+                              node: &'json Value,
                               errors: &mut Vec<ValidationError<'json>>) {
         if let Some(format) = self.format {
             if !format.is_valid(value) {
@@ -69,13 +69,10 @@ impl<'schema> StringSchema<'schema> {
 
 impl<'schema> SchemaBase for StringSchema<'schema> {
     fn validate_inner<'json>(&self,
-                             value: &'json JsonValue,
+                             value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {
         match *value {
-            JsonValue::String(ref s) => {
-                self.validate_string(s.as_str(), value, errors);
-            }
-            JsonValue::Short(ref s) => {
+            Value::String(ref s) => {
                 self.validate_string(s.as_str(), value, errors);
             }
             _ => {
@@ -90,7 +87,7 @@ impl<'schema> SchemaBase for StringSchema<'schema> {
         }
     }
 
-    fn from_json(node: &JsonValue) -> Option<Schema> {
+    fn from_json(node: &Value) -> Option<Schema> {
         None
     }
 }
@@ -179,33 +176,33 @@ impl Format {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use json;
+    use serde_json;
 
     #[test]
     fn string_len() {
         let schema = StringSchemaBuilder::default().min_length(5).max_length(10).build();
-        let input = json::parse(r#" "123455" "#).unwrap();
+        let input = serde_json::from_str(r#" "123455" "#).unwrap();
         schema.validate(&input).unwrap();
     }
 
     #[test]
     fn wrong_string_len() {
         let schema = StringSchemaBuilder::default().min_length(5).max_length(10).build();
-        let input = json::parse(r#" "123" "#).unwrap();
+        let input = serde_json::from_str(r#" "123" "#).unwrap();
         assert!(schema.validate(&input).is_err());
     }
 
     #[test]
     fn date_format() {
         let schema = StringSchemaBuilder::default().format(Format::DateTime).build();
-        let input = json::parse(r#" "1990-12-31T23:59:60Z" "#).unwrap();
+        let input = serde_json::from_str(r#" "1990-12-31T23:59:60Z" "#).unwrap();
         schema.validate(&input).unwrap();
     }
 
     #[test]
     fn wrong_date_format() {
         let schema = StringSchemaBuilder::default().format(Format::DateTime).build();
-        let input = json::parse(r#" "1990-12-31T23:59:60" "#).unwrap();
+        let input = serde_json::from_str(r#" "1990-12-31T23:59:60" "#).unwrap();
         assert!(schema.validate(&input).is_err());
     }
 }

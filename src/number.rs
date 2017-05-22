@@ -1,4 +1,4 @@
-use json::JsonValue;
+use serde_json::Value;
 
 use util::{JsonType, JsonValueExt};
 use errors::{ValidationError, ErrorReason};
@@ -19,7 +19,7 @@ pub struct NumberSchema<'schema> {
 
 impl<'schema> NumberSchema<'schema> {
     fn validate_range<'json>(&self,
-                             node: &'json JsonValue,
+                             node: &'json Value,
                              value: f64,
                              errors: &mut Vec<ValidationError<'json>>) {
         let mut bound = None;
@@ -59,9 +59,9 @@ impl<'schema> NumberSchema<'schema> {
 
 impl<'schema> SchemaBase for NumberSchema<'schema> {
     fn validate_inner<'json>(&self,
-                             value: &'json JsonValue,
+                             value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {
-        if let &JsonValue::Number(_) = value {
+        if let &Value::Number(_) = value {
             self.validate_range(value, value.as_f64().unwrap(), errors);
         } else {
             errors.push(ValidationError {
@@ -74,7 +74,7 @@ impl<'schema> SchemaBase for NumberSchema<'schema> {
         }
     }
 
-    fn from_json(node: &JsonValue) -> Option<Schema> {
+    fn from_json(node: &Value) -> Option<Schema> {
         None
     }
 }

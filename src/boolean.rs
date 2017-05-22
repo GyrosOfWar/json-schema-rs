@@ -1,4 +1,4 @@
-use json::JsonValue;
+use serde_json::Value;
 
 use util::{JsonType, JsonValueExt};
 use schema::{SchemaBase, Schema};
@@ -13,7 +13,7 @@ pub struct BooleanSchema<'schema> {
 
 impl<'schema> SchemaBase for BooleanSchema<'schema> {
     fn validate_inner<'json>(&self,
-                             value: &'json JsonValue,
+                             value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {
         if !value.is_boolean() {
             errors.push(ValidationError {
@@ -25,7 +25,7 @@ impl<'schema> SchemaBase for BooleanSchema<'schema> {
             });
         }
     }
-    fn from_json(node: &JsonValue) -> Option<Schema> {
+    fn from_json(node: &Value) -> Option<Schema> {
         None
     }
 }

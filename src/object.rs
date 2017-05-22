@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use json::JsonValue;
-use json::object::Object;
+use serde_json::Value;
+use serde_json::value::Map;
 use regex::Regex;
 
 use util::{JsonType, JsonValueExt};
@@ -25,12 +25,12 @@ pub struct ObjectSchema<'schema> {
 
 impl<'schema> ObjectSchema<'schema> {
     fn validate_properties<'json>(&self,
-                                  object: &'json Object,
-                                  parent: &'json JsonValue,
+                                  object: &'json Map<String, Value>,
+                                  parent: &'json Value,
                                   errors: &mut Vec<ValidationError<'json>>) {
         if let Some(ref schemas) = self.property_schemas {
             for (property, schema) in schemas {
-                match object.get(&property) {
+                match object.get(*property) {
                     Some(value) => {
                         schema.validate_inner(value, errors);
                     }
@@ -48,12 +48,12 @@ impl<'schema> ObjectSchema<'schema> {
     }
 
     fn validate_required<'json>(&self,
-                                object: &'json Object,
-                                parent: &'json JsonValue,
+                                object: &'json Map<String, Value>,
+                                parent: &'json Value,
                                 errors: &mut Vec<ValidationError<'json>>) {
         if let Some(ref required) = self.required {
             for property in required {
-                if object.get(property).is_none() {
+                if object.get(*property).is_none() {
                     errors.push(ValidationError {
                         reason: ErrorReason::MissingProperty(property.to_string()),
                         node: parent,
@@ -64,8 +64,8 @@ impl<'schema> ObjectSchema<'schema> {
     }
 
     fn validate_count<'json>(&self,
-                             object: &'json Object,
-                             parent: &'json JsonValue,
+                             object: &'json Map<String, Value>,
+                             parent: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {
         if let Some(min) = self.min_properties {
             if object.len() < min {
@@ -93,8 +93,8 @@ impl<'schema> ObjectSchema<'schema> {
     }
 
     fn validate_pattern_properties<'json>(&self,
-                                          object: &'json Object,
-                                          parent: &'json JsonValue,
+                                          object: &'json Map<String, Value>,
+                                          parent: &'json Value,
                                           errors: &mut Vec<ValidationError<'json>>) {
         if let Some(ref patterns) = self.pattern_properties {
             for (pattern, schema) in patterns {
@@ -126,10 +126,10 @@ impl<'schema> ObjectSchema<'schema> {
 
 impl<'schema> SchemaBase for ObjectSchema<'schema> {
     fn validate_inner<'json>(&self,
-                             value: &'json JsonValue,
+                             value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {
         match value {
-            &JsonValue::Object(ref o) => {
+            &Value::Object(ref o) => {
                 self.validate_properties(o, value, errors);
                 self.validate_required(o, value, errors);
                 self.validate_count(o, value, errors);
@@ -147,7 +147,7 @@ impl<'schema> SchemaBase for ObjectSchema<'schema> {
         }
     }
 
-    fn from_json(node: &JsonValue) -> Option<Schema> {
+    fn from_json(node: &Value) -> Option<Schema> {
         None
     }
 }
@@ -256,18 +256,18 @@ mod tests {
     use string::StringSchema;
     use array::ArraySchemaBuilder;
     use number::NumberSchema;
-    use json;
+    use serde_json;
 
     #[test]
     fn required_props() {
-        let input = json::parse(r#"{"id": 123.0, "name": "test", "unspecified": null}"#).unwrap();
+        let input = serde_json::from_str(r#"{"id": 123.0, "name": "test", "unspecified": null}"#).unwrap();
         let schema = ObjectSchemaBuilder::default().required(vec!["id", "name"]).build();
         schema.validate(&input).unwrap();
     }
 
     #[test]
     fn disallow_additional() {
-        let input = json::parse(r#"{"id": 123.0, "name": "test", "unspecified": null}"#).unwrap();
+        let input = serde_json::from_str(r#"{"id": 123.0, "name": "test", "unspecified": null}"#).unwrap();
         let schema = ObjectSchemaBuilder::default()
             .additional_properties(false)
             .required(vec!["id", "name"])
@@ -277,7 +277,7 @@ mod tests {
 
     #[test]
     fn missing_props() {
-        let input = json::parse(r#"{"id": 123.0, "name": "test"}"#).unwrap();
+        let input = serde_json::from_str(r#"{"id": 123.0, "name": "test"}"#).unwrap();
         let schema = ObjectSchemaBuilder::default().required(vec!["id", "name", "missing"]).build();
         let errors = schema.validate(&input).unwrap_err();
         assert_eq!(errors.len(), 1);
@@ -291,7 +291,7 @@ mod tests {
 
     #[test]
     fn schema_properties() {
-        let input = json::parse(r#"{"id": 123, "name": "test", "tags": ["a", "b", "c"],
+        let input = serde_json::from_str(r#"{"id": 123, "name": "test", "tags": ["a", "b", "c"],
         "color": [255, 255, 255]}"#)
             .unwrap();
         let mut schemas = HashMap::new();
@@ -352,7 +352,7 @@ mod tests {
         let mut file = File::open("data/canada-small.json").unwrap();
         let mut source = String::new();
         file.read_to_string(&mut source).unwrap();
-        let input = json::parse(&source).unwrap();
+        let input = serde_json::from_str(&source).unwrap();
         println!("{:#?}", schema);
         schema.validate(&input).unwrap();
     }

@@ -1,4 +1,4 @@
-use json::JsonValue;
+use serde_json::Value;
 
 use util::{JsonType, JsonValueExt};
 use schema::{SchemaBase, Schema};
@@ -19,7 +19,7 @@ pub struct IntegerSchema<'schema> {
 
 impl<'schema> SchemaBase for IntegerSchema<'schema> {
     fn validate_inner<'json>(&self,
-                             value: &'json JsonValue,
+                             value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {
         match value.get_type() {
             JsonType::Integer => {}
@@ -35,7 +35,7 @@ impl<'schema> SchemaBase for IntegerSchema<'schema> {
         }
     }
 
-    fn from_json(node: &JsonValue) -> Option<Schema> {
+    fn from_json(node: &Value) -> Option<Schema> {
         None
     }
 }

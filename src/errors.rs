@@ -1,4 +1,4 @@
-use json::JsonValue;
+use serde_json::Value;
 
 use util::JsonType;
 use string::Format;
@@ -24,5 +24,5 @@ pub type ValidationResult<'json> = Result<(), ValidationError<'json>>;
 #[derive(Debug, Clone)]
 pub struct ValidationError<'json> {
     pub reason: ErrorReason,
-    pub node: &'json JsonValue,
+    pub node: &'json Value,
 }

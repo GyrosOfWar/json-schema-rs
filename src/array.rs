@@ -1,6 +1,6 @@
-use json::JsonValue;
+use serde_json::Value;
 
-use util::{JsonValueExt, JsonType};
+use util::{JsonType, JsonValueExt};
 use errors::{ValidationError, ErrorReason};
 use schema::{Schema, SchemaBase};
 
@@ -22,8 +22,8 @@ pub struct ArraySchema<'schema> {
 
 impl<'schema> ArraySchema<'schema> {
     fn validate_size<'json>(&self,
-                            array: &'json [JsonValue],
-                            parent: &'json JsonValue,
+                            array: &'json [Value],
+                            parent: &'json Value,
                             errors: &mut Vec<ValidationError<'json>>) {
         if let Some(min) = self.min_items {
             if array.len() < min {
@@ -50,7 +50,7 @@ impl<'schema> ArraySchema<'schema> {
     }
 
     fn validate_all_items_schema<'json>(&self,
-                                        array: &'json [JsonValue],
+                                        array: &'json [Value],
                                         errors: &mut Vec<ValidationError<'json>>) {
         if let Some(ref schema) = *self.all_items_schema {
             for value in array {
@@ -60,8 +60,8 @@ impl<'schema> ArraySchema<'schema> {
     }
 
     fn validate_item_schema<'json>(&self,
-                                   array: &'json [JsonValue],
-                                   parent: &'json JsonValue,
+                                   array: &'json [Value],
+                                   parent: &'json Value,
                                    errors: &mut Vec<ValidationError<'json>>) {
         if let Some(ref schemas) = self.item_schemas {
             if schemas.len() != array.len() && !self.additional_items {
@@ -81,8 +81,8 @@ impl<'schema> ArraySchema<'schema> {
     }
 
     fn validate_unique<'json>(&self,
-                              array: &'json [JsonValue],
-                              parent: &'json JsonValue,
+                              array: &'json [Value],
+                              parent: &'json Value,
                               errors: &mut Vec<ValidationError<'json>>) {
         if self.unique_items {
             let mut unique_items = vec![];
@@ -105,10 +105,10 @@ impl<'schema> ArraySchema<'schema> {
 
 impl<'schema> SchemaBase for ArraySchema<'schema> {
     fn validate_inner<'json>(&self,
-                             value: &'json JsonValue,
+                             value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {
         match value {
-            &JsonValue::Array(ref array) => {
+            &Value::Array(ref array) => {
                 self.validate_size(array, value, errors);
                 self.validate_all_items_schema(array, errors);
                 self.validate_item_schema(array, value, errors);
@@ -126,8 +126,7 @@ impl<'schema> SchemaBase for ArraySchema<'schema> {
         }
     }
     
-    fn from_json(node: &JsonValue) -> Option<Schema> {
-        
+    fn from_json(node: &Value) -> Option<Schema> {
         None
     }
 }
@@ -233,7 +232,7 @@ impl<'schema> ArraySchemaBuilder<'schema> {
 
 #[cfg(test)]
 mod tests {
-    use json;
+    use serde_json;
     use super::*;
     use number::NumberSchemaBuilder;
     use errors::*;
@@ -243,7 +242,7 @@ mod tests {
         let schema = ArraySchemaBuilder::default()
             .unique_items(true)
             .build();
-        let input = json::parse("[1, 1, 2, 3, 4]").unwrap();
+        let input = serde_json::from_str("[1, 1, 2, 3, 4]").unwrap();
         let mut errors = vec![];
         schema.validate_inner(&input, &mut errors);
         assert_eq!(errors.len(), 1);
@@ -257,7 +256,7 @@ mod tests {
     #[test]
     fn default_schema() {
         let schema = ArraySchemaBuilder::default().build();
-        let input = json::parse(r#"[1, "a", "b", {"test": 123}, []]"#).unwrap();
+        let input = serde_json::from_str(r#"[1, "a", "b", {"test": 123}, []]"#).unwrap();
         let mut errors = vec![];
         schema.validate_inner(&input, &mut errors);
         assert_eq!(errors.len(), 0)
@@ -265,7 +264,7 @@ mod tests {
 
     #[test]
     fn subschema() {
-        let input = json::parse(r#"[[], 1.2, 1.4, 1.9, 2.5]"#).unwrap();
+        let input = serde_json::from_str(r#"[[], 1.2, 1.4, 1.9, 2.5]"#).unwrap();
         let item_schema = NumberSchemaBuilder::default()
             .minimum(1.0)
             .maximum(2.0)
