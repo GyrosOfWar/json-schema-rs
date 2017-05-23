@@ -2,7 +2,7 @@ use serde_json::Value;
 
 use util::{JsonType, JsonValueExt};
 use errors::{ValidationError, ErrorKind};
-use schema::{Schema, SchemaBase};
+use schema::{SchemaBase, Context, Schema};
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -68,8 +68,13 @@ impl NumberSchema {
 }
 
 impl SchemaBase for NumberSchema {
+    fn inner(&self) -> &Schema {
+        &Schema::Number(*self)
+    }
+
     #[doc(hidden)]
     fn validate_inner<'json>(&self,
+                             ctx: &Context,
                              value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {
         if let Value::Number(_) = *value {

@@ -5,7 +5,7 @@ use serde_json::value::Map;
 use regex::Regex;
 
 use util::{JsonType, JsonValueExt};
-use schema::{Schema, SchemaBase};
+use schema::{SchemaBase, Context, Schema};
 use errors::{ValidationError, ErrorKind};
 
 /// An object schema.
@@ -32,6 +32,7 @@ impl ObjectSchema {
     }
 
     fn validate_properties<'json>(&self,
+                                  ctx: &Context,
                                   object: &'json Map<String, Value>,
                                   parent: &'json Value,
                                   errors: &mut Vec<ValidationError<'json>>) {
@@ -39,7 +40,7 @@ impl ObjectSchema {
             for (property, schema) in schemas {
                 match object.get(property) {
                     Some(value) => {
-                        schema.validate_inner(value, errors);
+                        schema.validate_inner(ctx, value, errors);
                     }
                     None => {
                         if !self.additional_properties() {
@@ -101,6 +102,7 @@ impl ObjectSchema {
     }
 
     fn validate_pattern_properties<'json>(&self,
+                                          ctx: &Context,
                                           object: &'json Map<String, Value>,
                                           parent: &'json Value,
                                           errors: &mut Vec<ValidationError<'json>>) {
@@ -112,7 +114,7 @@ impl ObjectSchema {
                         let mut found_match = false;
                         for (prop, value) in object.iter() {
                             if re.is_match(prop) {
-                                schema.validate_inner(value, errors);
+                                schema.validate_inner(ctx, value, errors);
                                 found_match = true;
                             }
                         }
@@ -133,25 +135,25 @@ impl ObjectSchema {
 }
 
 impl SchemaBase for ObjectSchema {
+    fn inner(&self) -> &Schema {
+        &Schema::Object(*self)
+    }
+
     #[doc(hidden)]
     fn validate_inner<'json>(&self,
+                             ctx: &Context,
                              value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {
         match value {
             &Value::Object(ref o) => {
-                self.validate_properties(o, value, errors);
+                self.validate_properties(ctx, o, value, errors);
                 self.validate_required(o, value, errors);
                 self.validate_count(o, value, errors);
-                self.validate_pattern_properties(o, value, errors);
+                self.validate_pattern_properties(ctx, o, value, errors);
             }
             val => {
-                errors.push(ValidationError {
-                                reason: ErrorKind::TypeMismatch {
-                                    expected: JsonType::Object,
-                                    found: val.get_type(),
-                                },
-                                node: val,
-                            });
+                errors
+                    .push(ValidationError::type_mismatch(value, JsonType::Object, val.get_type()));
             }
         }
     }

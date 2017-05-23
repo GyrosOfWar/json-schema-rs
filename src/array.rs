@@ -2,7 +2,7 @@ use serde_json::Value;
 
 use util::{JsonType, JsonValueExt};
 use errors::{ValidationError, ErrorKind};
-use schema::{Schema, SchemaBase};
+use schema::{Schema, SchemaBase, Context};
 
 /// Schema for JSON arrays like `[1, 2, 3]`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -67,6 +67,7 @@ impl ArraySchema {
     }
 
     fn validate_items<'json>(&self,
+                             ctx: &Context,
                              array: &'json [Value],
                              parent: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {
@@ -84,12 +85,12 @@ impl ArraySchema {
                     }
 
                     for (schema, value) in schemas.iter().zip(array) {
-                        schema.validate_inner(value, errors);
+                        schema.validate_inner(ctx, value, errors);
                     }
                 }
                 Items::List(ref schema) => {
                     for value in array {
-                        schema.validate_inner(value, errors);
+                        schema.validate_inner(ctx, value, errors);
                     }
                 }
             }
@@ -120,14 +121,19 @@ impl ArraySchema {
 
 
 impl SchemaBase for ArraySchema {
+    fn inner(&self) -> &Schema {
+        &Schema::Array(*self)
+    }
+
     #[doc(hidden)]
     fn validate_inner<'json>(&self,
+                             ctx: &Context,
                              value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {
         match value {
             &Value::Array(ref array) => {
                 self.validate_size(array, value, errors);
-                self.validate_items(array, value, errors);
+                self.validate_items(ctx, array, value, errors);
                 self.validate_unique(array, value, errors);
             }
             val => {
@@ -248,8 +254,7 @@ mod tests {
     fn unique_elements() {
         let schema = ArraySchemaBuilder::default().unique_items(true).build();
         let input = serde_json::from_str("[1, 1, 2, 3, 4]").unwrap();
-        let mut errors = vec![];
-        schema.validate_inner(&input, &mut errors);
+        let errors = schema.validate(&input).unwrap_err().0;
         assert_eq!(errors.len(), 1);
         if let ErrorKind::ArrayItemNotUnique = errors[0].reason {
 
@@ -262,8 +267,7 @@ mod tests {
     fn default_schema() {
         let schema = ArraySchemaBuilder::default().build();
         let input = serde_json::from_str(r#"[1, "a", "b", {"test": 123}, []]"#).unwrap();
-        let mut errors = vec![];
-        schema.validate_inner(&input, &mut errors);
+        let errors = schema.validate(&input).unwrap_err().0;
         assert_eq!(errors.len(), 0)
     }
 
@@ -277,8 +281,7 @@ mod tests {
         let schema = ArraySchemaBuilder::default()
             .all_items_schema(item_schema)
             .build();
-        let mut errors = vec![];
-        schema.validate_inner(&input, &mut errors);
+        let errors = schema.validate(&input).unwrap_err().0;
         assert_eq!(errors.len(), 2);
         assert_eq!(*errors[0].node, input[0]);
         if let ErrorKind::NumberRange { value, bound } = errors[1].reason {

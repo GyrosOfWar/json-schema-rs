@@ -40,6 +40,9 @@ pub mod string;
 pub mod boolean;
 /// Implementation of the integer schmea
 pub mod integer;
+/// Implementation of references
+pub mod reference;
+
 mod util;
 
 pub use schema::{SchemaBase, Schema};

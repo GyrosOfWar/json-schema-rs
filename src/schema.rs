@@ -10,17 +10,25 @@ use object::ObjectSchema;
 use number::NumberSchema;
 use string::StringSchema;
 
+// TODO move the other parameters to the context?
+pub struct Context<'s> {
+    pub schema: &'s Schema,
+}
+
 /// The trait that all schema types implement.
 pub trait SchemaBase {
+    fn inner(&self) -> &Schema;
+
     #[doc(hidden)]
     fn validate_inner<'json>(&self,
+                             ctx: &Context,
                              value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>);
-
     /// Validates a JSON value with this schema.
     fn validate<'json>(&self, value: &'json Value) -> Result<(), ValidationErrors<'json>> {
         let mut errors = vec![];
-        self.validate_inner(value, &mut errors);
+        let context = Context { schema: self.inner() };
+        self.validate_inner(&context, value, &mut errors);
 
         if errors.is_empty() {
             Ok(())
@@ -36,7 +44,12 @@ pub struct EmptySchema;
 
 #[doc(hidden)]
 impl SchemaBase for EmptySchema {
+    fn inner(&self) -> &Schema {
+        &Schema::Empty(*self)
+    }
+
     fn validate_inner<'json>(&self,
+                             _ctx: &Context,
                              _value: &'json Value,
                              _errors: &mut Vec<ValidationError<'json>>) {
 
@@ -95,19 +108,24 @@ impl_traits! { IntegerSchema, Schema::Integer }
 impl_traits! { EmptySchema, Schema::Empty }
 
 impl SchemaBase for Schema {
+    fn inner(&self) -> &Schema {
+        self
+    }
+
     #[doc(hidden)]
     fn validate_inner<'json>(&self,
+                             ctx: &Context,
                              value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {
         use self::Schema::*;
         match *self {
-            Boolean(ref s) => s.validate_inner(value, errors),
-            Object(ref s) => s.validate_inner(value, errors),
-            Array(ref s) => s.validate_inner(value, errors),
-            Number(ref s) => s.validate_inner(value, errors),
-            String(ref s) => s.validate_inner(value, errors),
-            Integer(ref s) => s.validate_inner(value, errors),
-            Empty(ref s) => s.validate_inner(value, errors),
+            Boolean(ref s) => s.validate_inner(ctx, value, errors),
+            Object(ref s) => s.validate_inner(ctx, value, errors),
+            Array(ref s) => s.validate_inner(ctx, value, errors),
+            Number(ref s) => s.validate_inner(ctx, value, errors),
+            String(ref s) => s.validate_inner(ctx, value, errors),
+            Integer(ref s) => s.validate_inner(ctx, value, errors),
+            Empty(ref s) => s.validate_inner(ctx, value, errors),
         }
     }
 }

@@ -6,7 +6,7 @@ use chrono::prelude::*;
 use url::Url;
 
 use util::{JsonType, JsonValueExt};
-use schema::{SchemaBase, Schema};
+use schema::{SchemaBase, Context, Schema};
 use errors::{ValidationError, ErrorKind};
 
 mod regex_serde {
@@ -105,8 +105,13 @@ impl StringSchema {
 }
 
 impl SchemaBase for StringSchema {
+    fn inner(&self) -> &Schema {
+        &Schema::String(*self)
+    }
+
     #[doc(hidden)]
     fn validate_inner<'json>(&self,
+                             ctx: &Context,
                              value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {
         match *value {
