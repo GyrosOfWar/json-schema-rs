@@ -68,10 +68,6 @@ impl NumberSchema {
 }
 
 impl SchemaBase for NumberSchema {
-    fn inner(&self) -> &Schema {
-        &Schema::Number(*self)
-    }
-
     #[doc(hidden)]
     fn validate_inner<'json>(&self,
                              ctx: &Context,

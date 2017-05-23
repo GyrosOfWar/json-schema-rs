@@ -11,23 +11,26 @@ use number::NumberSchema;
 use string::StringSchema;
 
 // TODO move the other parameters to the context?
+#[derive(Debug)]
 pub struct Context<'s> {
-    pub schema: &'s Schema,
+    pub root: &'s Schema,
 }
 
 /// The trait that all schema types implement.
 pub trait SchemaBase {
-    fn inner(&self) -> &Schema;
-
     #[doc(hidden)]
     fn validate_inner<'json>(&self,
                              ctx: &Context,
                              value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>);
+
     /// Validates a JSON value with this schema.
-    fn validate<'json>(&self, value: &'json Value) -> Result<(), ValidationErrors<'json>> {
+    fn validate_start<'json>(&self,
+                             value: &'json Value,
+                             root: &Schema)
+                             -> Result<(), ValidationErrors<'json>> {
         let mut errors = vec![];
-        let context = Context { schema: self.inner() };
+        let context = Context { root };
         self.validate_inner(&context, value, &mut errors);
 
         if errors.is_empty() {
@@ -44,10 +47,6 @@ pub struct EmptySchema;
 
 #[doc(hidden)]
 impl SchemaBase for EmptySchema {
-    fn inner(&self) -> &Schema {
-        &Schema::Empty(*self)
-    }
-
     fn validate_inner<'json>(&self,
                              _ctx: &Context,
                              _value: &'json Value,
@@ -82,6 +81,12 @@ pub enum Schema {
     Empty(EmptySchema),
 }
 
+impl Schema {
+    pub fn validate<'json>(&self, value: &'json Value) -> Result<(), ValidationErrors<'json>> {
+        self.validate_start(value, self)
+    }
+}
+
 impl FromStr for Schema {
     type Err = Error;
     fn from_str(s: &str) -> ::std::result::Result<Schema, Self::Err> {
@@ -108,10 +113,6 @@ impl_traits! { IntegerSchema, Schema::Integer }
 impl_traits! { EmptySchema, Schema::Empty }
 
 impl SchemaBase for Schema {
-    fn inner(&self) -> &Schema {
-        self
-    }
-
     #[doc(hidden)]
     fn validate_inner<'json>(&self,
                              ctx: &Context,

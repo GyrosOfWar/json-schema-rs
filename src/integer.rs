@@ -21,10 +21,6 @@ pub struct IntegerSchema {
 }
 
 impl SchemaBase for IntegerSchema {
-    fn inner(&self) -> &Schema {
-        &Schema::Integer(*self)
-    }
-
     #[doc(hidden)]
     fn validate_inner<'json>(&self,
                              ctx: &Context,

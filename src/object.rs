@@ -135,10 +135,6 @@ impl ObjectSchema {
 }
 
 impl SchemaBase for ObjectSchema {
-    fn inner(&self) -> &Schema {
-        &Schema::Object(*self)
-    }
-
     #[doc(hidden)]
     fn validate_inner<'json>(&self,
                              ctx: &Context,

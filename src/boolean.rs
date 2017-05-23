@@ -14,10 +14,6 @@ pub struct BooleanSchema {
 }
 
 impl SchemaBase for BooleanSchema {
-    fn inner(&self) -> &Schema {
-        &Schema::Boolean(*self)
-    }
-
     #[doc(hidden)]
     fn validate_inner<'json>(&self,
                              ctx: &Context,

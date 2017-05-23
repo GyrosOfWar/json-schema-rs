@@ -105,27 +105,17 @@ impl StringSchema {
 }
 
 impl SchemaBase for StringSchema {
-    fn inner(&self) -> &Schema {
-        &Schema::String(*self)
-    }
-
     #[doc(hidden)]
     fn validate_inner<'json>(&self,
                              ctx: &Context,
                              value: &'json Value,
                              errors: &mut Vec<ValidationError<'json>>) {
-        match *value {
-            Value::String(ref s) => {
+        match value {
+            &Value::String(ref s) => {
                 self.validate_string(s.as_str(), value, errors);
             }
-            _ => {
-                errors.push(ValidationError {
-                                reason: ErrorKind::TypeMismatch {
-                                    expected: JsonType::String,
-                                    found: value.get_type(),
-                                },
-                                node: value,
-                            });
+            val => {
+                errors.push(ValidationError::type_mismatch(value, JsonType::String, value.get_type()))
             }
         }
     }

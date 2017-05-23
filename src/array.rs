@@ -121,10 +121,6 @@ impl ArraySchema {
 
 
 impl SchemaBase for ArraySchema {
-    fn inner(&self) -> &Schema {
-        &Schema::Array(*self)
-    }
-
     #[doc(hidden)]
     fn validate_inner<'json>(&self,
                              ctx: &Context,
@@ -137,13 +133,7 @@ impl SchemaBase for ArraySchema {
                 self.validate_unique(array, value, errors);
             }
             val => {
-                errors.push(ValidationError {
-                                reason: ErrorKind::TypeMismatch {
-                                    expected: JsonType::Array,
-                                    found: val.get_type(),
-                                },
-                                node: value,
-                            })
+                errors.push(ValidationError::type_mismatch(val, JsonType::Array, val.get_type()))
             }
         }
     }
@@ -267,8 +257,8 @@ mod tests {
     fn default_schema() {
         let schema = ArraySchemaBuilder::default().build();
         let input = serde_json::from_str(r#"[1, "a", "b", {"test": 123}, []]"#).unwrap();
-        let errors = schema.validate(&input).unwrap_err().0;
-        assert_eq!(errors.len(), 0)
+        let result = schema.validate(&input);
+        assert!(result.is_ok());
     }
 
     #[test]
