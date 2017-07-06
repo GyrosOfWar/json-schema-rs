@@ -28,10 +28,12 @@ impl NumberSchema {
         self.exclusive_minimum.unwrap_or(false)
     }
 
-    fn validate_range<'json>(&self,
-                             node: &'json Value,
-                             value: f64,
-                             errors: &mut Vec<ValidationError<'json>>) {
+    fn validate_range<'json>(
+        &self,
+        node: &'json Value,
+        value: f64,
+        errors: &mut Vec<ValidationError<'json>>,
+    ) {
         let mut bound = None;
         if let Some(min) = self.minimum {
             let out_of_bounds = if self.exclusive_minimum() {
@@ -57,32 +59,34 @@ impl NumberSchema {
 
         if let Some(b) = bound {
             errors.push(ValidationError {
-                            reason: ErrorKind::NumberRange {
-                                bound: b,
-                                value: value,
-                            },
-                            node: node,
-                        })
+                reason: ErrorKind::NumberRange {
+                    bound: b,
+                    value: value,
+                },
+                node: node,
+            })
         }
     }
 }
 
 impl SchemaBase for NumberSchema {
     #[doc(hidden)]
-    fn validate_inner<'json>(&self,
-                             ctx: &Context,
-                             value: &'json Value,
-                             errors: &mut Vec<ValidationError<'json>>) {
+    fn validate_inner<'json>(
+        &self,
+        ctx: &Context,
+        value: &'json Value,
+        errors: &mut Vec<ValidationError<'json>>,
+    ) {
         if let Value::Number(_) = *value {
             self.validate_range(value, value.as_f64().unwrap(), errors);
         } else {
             errors.push(ValidationError {
-                            reason: ErrorKind::TypeMismatch {
-                                expected: JsonType::Number,
-                                found: value.get_type(),
-                            },
-                            node: value,
-                        })
+                reason: ErrorKind::TypeMismatch {
+                    expected: JsonType::Number,
+                    found: value.get_type(),
+                },
+                node: value,
+            })
         }
     }
 }
@@ -113,16 +117,16 @@ impl NumberSchemaBuilder {
 
     pub fn build(self) -> Schema {
         From::from(NumberSchema {
-                       description: self.description,
-                       id: self.id,
-                       title: self.title,
+            description: self.description,
+            id: self.id,
+            title: self.title,
 
-                       multiple_of: self.multiple_of,
-                       minimum: self.minimum,
-                       maximum: self.maximum,
-                       exclusive_minimum: Some(self.exclusive_minimum),
-                       exclusive_maximum: Some(self.exclusive_maximum),
-                   })
+            multiple_of: self.multiple_of,
+            minimum: self.minimum,
+            maximum: self.maximum,
+            exclusive_minimum: Some(self.exclusive_minimum),
+            exclusive_maximum: Some(self.exclusive_maximum),
+        })
     }
 }
 

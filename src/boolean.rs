@@ -15,18 +15,20 @@ pub struct BooleanSchema {
 
 impl SchemaBase for BooleanSchema {
     #[doc(hidden)]
-    fn validate_inner<'json>(&self,
-                             ctx: &Context,
-                             value: &'json Value,
-                             errors: &mut Vec<ValidationError<'json>>) {
+    fn validate_inner<'json>(
+        &self,
+        ctx: &Context,
+        value: &'json Value,
+        errors: &mut Vec<ValidationError<'json>>,
+    ) {
         if !value.is_boolean() {
             errors.push(ValidationError {
-                            reason: ErrorKind::TypeMismatch {
-                                expected: JsonType::Boolean,
-                                found: value.get_type(),
-                            },
-                            node: value,
-                        });
+                reason: ErrorKind::TypeMismatch {
+                    expected: JsonType::Boolean,
+                    found: value.get_type(),
+                },
+                node: value,
+            });
         }
     }
 }

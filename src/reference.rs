@@ -14,19 +14,19 @@ impl ReferenceSchema {
     fn resolve(&self) -> Schema {
         // TODO
         // This document
-        if self.reference.starts_with('#') {
-
-        }
+        if self.reference.starts_with('#') {}
 
         unimplemented!()
     }
 }
 
 impl SchemaBase for ReferenceSchema {
-    fn validate_inner<'json>(&self,
-                             ctx: &Context,
-                             value: &'json Value,
-                             errors: &mut Vec<ValidationError<'json>>) {
+    fn validate_inner<'json>(
+        &self,
+        ctx: &Context,
+        value: &'json Value,
+        errors: &mut Vec<ValidationError<'json>>,
+    ) {
         self.resolve().validate_inner(ctx, value, errors)
     }
 }

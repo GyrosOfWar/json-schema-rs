@@ -14,7 +14,8 @@ mod regex_serde {
     use regex::Regex;
 
     pub fn serialize<S>(regex: &Option<Regex>, serializer: S) -> Result<S::Ok, S::Error>
-        where S: Serializer
+    where
+        S: Serializer,
     {
         match *regex {
             Some(ref r) => serializer.serialize_str(r.as_str()),
@@ -24,7 +25,8 @@ mod regex_serde {
 
 
     pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
-        where D: Deserializer<'de>
+    where
+        D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
         Regex::new(&s).map_err(serde::de::Error::custom).map(Some)
@@ -46,40 +48,42 @@ pub struct StringSchema {
 }
 
 impl StringSchema {
-    fn validate_string<'json>(&self,
-                              value: &'json str,
-                              node: &'json Value,
-                              errors: &mut Vec<ValidationError<'json>>) {
+    fn validate_string<'json>(
+        &self,
+        value: &'json str,
+        node: &'json Value,
+        errors: &mut Vec<ValidationError<'json>>,
+    ) {
         if let Some(format) = self.format {
             if !format.is_valid(value) {
                 errors.push(ValidationError {
-                                reason: ErrorKind::InvalidFormat(format),
-                                node: node,
-                            })
+                    reason: ErrorKind::InvalidFormat(format),
+                    node: node,
+                })
             }
         }
 
         if let Some(min) = self.min_length {
             if value.len() < min {
                 errors.push(ValidationError {
-                                reason: ErrorKind::MinLength {
-                                    expected: min,
-                                    found: value.len(),
-                                },
-                                node: node,
-                            })
+                    reason: ErrorKind::MinLength {
+                        expected: min,
+                        found: value.len(),
+                    },
+                    node: node,
+                })
             }
         }
 
         if let Some(max) = self.max_length {
             if value.len() > max {
                 errors.push(ValidationError {
-                                reason: ErrorKind::MinLength {
-                                    expected: max,
-                                    found: value.len(),
-                                },
-                                node: node,
-                            })
+                    reason: ErrorKind::MinLength {
+                        expected: max,
+                        found: value.len(),
+                    },
+                    node: node,
+                })
             }
         }
 
@@ -88,16 +92,16 @@ impl StringSchema {
                 Ok(re) => {
                     if !re.is_match(value) {
                         errors.push(ValidationError {
-                                        reason: ErrorKind::RegexMismatch { regex: re.clone() },
-                                        node: node,
-                                    })
+                            reason: ErrorKind::RegexMismatch { regex: re.clone() },
+                            node: node,
+                        })
                     }
                 }
                 Err(e) => {
                     errors.push(ValidationError {
-                                    reason: ErrorKind::InvalidRegex(re.clone()),
-                                    node: node,
-                                })
+                        reason: ErrorKind::InvalidRegex(re.clone()),
+                        node: node,
+                    })
                 }
             }
         }
@@ -106,16 +110,22 @@ impl StringSchema {
 
 impl SchemaBase for StringSchema {
     #[doc(hidden)]
-    fn validate_inner<'json>(&self,
-                             ctx: &Context,
-                             value: &'json Value,
-                             errors: &mut Vec<ValidationError<'json>>) {
+    fn validate_inner<'json>(
+        &self,
+        ctx: &Context,
+        value: &'json Value,
+        errors: &mut Vec<ValidationError<'json>>,
+    ) {
         match value {
             &Value::String(ref s) => {
                 self.validate_string(s.as_str(), value, errors);
             }
             val => {
-                errors.push(ValidationError::type_mismatch(value, JsonType::String, value.get_type()))
+                errors.push(ValidationError::type_mismatch(
+                    value,
+                    JsonType::String,
+                    value.get_type(),
+                ))
             }
         }
     }
@@ -172,15 +182,15 @@ impl StringSchemaBuilder {
 
     pub fn build(self) -> Schema {
         Schema::from(StringSchema {
-                         description: self.description,
-                         id: self.id,
-                         title: self.title,
+            description: self.description,
+            id: self.id,
+            title: self.title,
 
-                         min_length: self.min_length,
-                         max_length: self.max_length,
-                         pattern: self.pattern,
-                         format: self.format,
-                     })
+            min_length: self.min_length,
+            max_length: self.max_length,
+            pattern: self.pattern,
+            format: self.format,
+        })
     }
 }
 
@@ -230,7 +240,7 @@ mod tests {
             .min_length(5)
             .max_length(10)
             .build();
-        let input = serde_json::from_str(r#" "123455" "#).unwrap();
+        let input = serde_json::from_str(r#" "123456" "#).unwrap();
         schema.validate(&input).unwrap();
     }
 

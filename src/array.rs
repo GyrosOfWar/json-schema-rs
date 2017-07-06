@@ -38,50 +38,54 @@ impl ArraySchema {
         self.unique_items.unwrap_or(false)
     }
 
-    fn validate_size<'json>(&self,
-                            array: &'json [Value],
-                            parent: &'json Value,
-                            errors: &mut Vec<ValidationError<'json>>) {
+    fn validate_size<'json>(
+        &self,
+        array: &'json [Value],
+        parent: &'json Value,
+        errors: &mut Vec<ValidationError<'json>>,
+    ) {
         if let Some(min) = self.min_items {
             if array.len() < min {
                 errors.push(ValidationError {
-                                reason: ErrorKind::MinLength {
-                                    expected: min,
-                                    found: array.len(),
-                                },
-                                node: parent,
-                            });
+                    reason: ErrorKind::MinLength {
+                        expected: min,
+                        found: array.len(),
+                    },
+                    node: parent,
+                });
             }
         }
         if let Some(max) = self.max_items {
             if array.len() > max {
                 errors.push(ValidationError {
-                                reason: ErrorKind::MaxLength {
-                                    expected: max,
-                                    found: array.len(),
-                                },
-                                node: parent,
-                            });
+                    reason: ErrorKind::MaxLength {
+                        expected: max,
+                        found: array.len(),
+                    },
+                    node: parent,
+                });
             }
         }
     }
 
-    fn validate_items<'json>(&self,
-                             ctx: &Context,
-                             array: &'json [Value],
-                             parent: &'json Value,
-                             errors: &mut Vec<ValidationError<'json>>) {
+    fn validate_items<'json>(
+        &self,
+        ctx: &Context,
+        array: &'json [Value],
+        parent: &'json Value,
+        errors: &mut Vec<ValidationError<'json>>,
+    ) {
         if let Some(ref items) = self.items {
             match *items {
                 Items::Tuple(ref schemas) => {
                     if schemas.len() != array.len() && !self.additional_items() {
                         errors.push(ValidationError {
-                                        reason: ErrorKind::TupleLengthMismatch {
-                                            schemas: schemas.len(),
-                                            tuple: array.len(),
-                                        },
-                                        node: parent,
-                                    });
+                            reason: ErrorKind::TupleLengthMismatch {
+                                schemas: schemas.len(),
+                                tuple: array.len(),
+                            },
+                            node: parent,
+                        });
                     }
 
                     for (schema, value) in schemas.iter().zip(array) {
@@ -97,19 +101,21 @@ impl ArraySchema {
         }
     }
 
-    fn validate_unique<'json>(&self,
-                              array: &'json [Value],
-                              parent: &'json Value,
-                              errors: &mut Vec<ValidationError<'json>>) {
+    fn validate_unique<'json>(
+        &self,
+        array: &'json [Value],
+        parent: &'json Value,
+        errors: &mut Vec<ValidationError<'json>>,
+    ) {
         if self.unique_items() {
             let mut unique_items = vec![];
             for item in array {
                 for contained in &unique_items {
                     if *contained == item {
                         errors.push(ValidationError {
-                                        node: parent,
-                                        reason: ErrorKind::ArrayItemNotUnique,
-                                    });
+                            node: parent,
+                            reason: ErrorKind::ArrayItemNotUnique,
+                        });
                         return;
                     }
                 }
@@ -122,10 +128,12 @@ impl ArraySchema {
 
 impl SchemaBase for ArraySchema {
     #[doc(hidden)]
-    fn validate_inner<'json>(&self,
-                             ctx: &Context,
-                             value: &'json Value,
-                             errors: &mut Vec<ValidationError<'json>>) {
+    fn validate_inner<'json>(
+        &self,
+        ctx: &Context,
+        value: &'json Value,
+        errors: &mut Vec<ValidationError<'json>>,
+    ) {
         match value {
             &Value::Array(ref array) => {
                 self.validate_size(array, value, errors);
@@ -133,7 +141,11 @@ impl SchemaBase for ArraySchema {
                 self.validate_unique(array, value, errors);
             }
             val => {
-                errors.push(ValidationError::type_mismatch(val, JsonType::Array, val.get_type()))
+                errors.push(ValidationError::type_mismatch(
+                    val,
+                    JsonType::Array,
+                    val.get_type(),
+                ))
             }
         }
     }
@@ -219,17 +231,17 @@ impl ArraySchemaBuilder {
 
     pub fn build(self) -> Schema {
         From::from(ArraySchema {
-                       description: self.description,
-                       id: self.id,
-                       title: self.title,
+            description: self.description,
+            id: self.id,
+            title: self.title,
 
-                       min_items: self.min_items,
-                       max_items: self.max_items,
-                       unique_items: Some(self.unique_items),
+            min_items: self.min_items,
+            max_items: self.max_items,
+            unique_items: Some(self.unique_items),
 
-                       items: self.items,
-                       additional_items: Some(self.additional_items),
-                   })
+            items: self.items,
+            additional_items: Some(self.additional_items),
+        })
     }
 }
 

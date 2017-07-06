@@ -31,11 +31,13 @@ impl ObjectSchema {
         self.additional_properties.unwrap_or(false)
     }
 
-    fn validate_properties<'json>(&self,
-                                  ctx: &Context,
-                                  object: &'json Map<String, Value>,
-                                  parent: &'json Value,
-                                  errors: &mut Vec<ValidationError<'json>>) {
+    fn validate_properties<'json>(
+        &self,
+        ctx: &Context,
+        object: &'json Map<String, Value>,
+        parent: &'json Value,
+        errors: &mut Vec<ValidationError<'json>>,
+    ) {
         if let Some(ref schemas) = self.properties {
             for (property, schema) in schemas {
                 match object.get(property) {
@@ -45,10 +47,9 @@ impl ObjectSchema {
                     None => {
                         if !self.additional_properties() {
                             errors.push(ValidationError {
-                                            reason:
-                                                ErrorKind::MissingProperty(property.to_string()),
-                                            node: parent,
-                                        });
+                                reason: ErrorKind::MissingProperty(property.to_string()),
+                                node: parent,
+                            });
                         }
                     }
                 }
@@ -56,56 +57,62 @@ impl ObjectSchema {
         }
     }
 
-    fn validate_required<'json>(&self,
-                                object: &'json Map<String, Value>,
-                                parent: &'json Value,
-                                errors: &mut Vec<ValidationError<'json>>) {
+    fn validate_required<'json>(
+        &self,
+        object: &'json Map<String, Value>,
+        parent: &'json Value,
+        errors: &mut Vec<ValidationError<'json>>,
+    ) {
         if let Some(ref required) = self.required {
             for property in required {
                 if object.get(property).is_none() {
                     errors.push(ValidationError {
-                                    reason: ErrorKind::MissingProperty(property.to_string()),
-                                    node: parent,
-                                })
+                        reason: ErrorKind::MissingProperty(property.to_string()),
+                        node: parent,
+                    })
                 }
             }
         }
     }
 
-    fn validate_count<'json>(&self,
-                             object: &'json Map<String, Value>,
-                             parent: &'json Value,
-                             errors: &mut Vec<ValidationError<'json>>) {
+    fn validate_count<'json>(
+        &self,
+        object: &'json Map<String, Value>,
+        parent: &'json Value,
+        errors: &mut Vec<ValidationError<'json>>,
+    ) {
         if let Some(min) = self.min_properties {
             if object.len() < min {
                 errors.push(ValidationError {
-                                reason: ErrorKind::PropertyCount {
-                                    bound: min,
-                                    found: object.len(),
-                                },
-                                node: parent,
-                            })
+                    reason: ErrorKind::PropertyCount {
+                        bound: min,
+                        found: object.len(),
+                    },
+                    node: parent,
+                })
             }
         }
 
         if let Some(max) = self.max_properties {
             if object.len() > max {
                 errors.push(ValidationError {
-                                reason: ErrorKind::PropertyCount {
-                                    bound: max,
-                                    found: object.len(),
-                                },
-                                node: parent,
-                            })
+                    reason: ErrorKind::PropertyCount {
+                        bound: max,
+                        found: object.len(),
+                    },
+                    node: parent,
+                })
             }
         }
     }
 
-    fn validate_pattern_properties<'json>(&self,
-                                          ctx: &Context,
-                                          object: &'json Map<String, Value>,
-                                          parent: &'json Value,
-                                          errors: &mut Vec<ValidationError<'json>>) {
+    fn validate_pattern_properties<'json>(
+        &self,
+        ctx: &Context,
+        object: &'json Map<String, Value>,
+        parent: &'json Value,
+        errors: &mut Vec<ValidationError<'json>>,
+    ) {
         if let Some(ref patterns) = self.pattern_properties {
             for (pattern, schema) in patterns {
                 // TODO(performance) cache compiled regexes
@@ -124,9 +131,9 @@ impl ObjectSchema {
                     }
                     Err(e) => {
                         errors.push(ValidationError {
-                                        reason: ErrorKind::InvalidRegex(format!("{}", e)),
-                                        node: parent,
-                                    })
+                            reason: ErrorKind::InvalidRegex(format!("{}", e)),
+                            node: parent,
+                        })
                     }
                 }
             }
@@ -136,10 +143,12 @@ impl ObjectSchema {
 
 impl SchemaBase for ObjectSchema {
     #[doc(hidden)]
-    fn validate_inner<'json>(&self,
-                             ctx: &Context,
-                             value: &'json Value,
-                             errors: &mut Vec<ValidationError<'json>>) {
+    fn validate_inner<'json>(
+        &self,
+        ctx: &Context,
+        value: &'json Value,
+        errors: &mut Vec<ValidationError<'json>>,
+    ) {
         match value {
             &Value::Object(ref o) => {
                 self.validate_properties(ctx, o, value, errors);
@@ -148,8 +157,11 @@ impl SchemaBase for ObjectSchema {
                 self.validate_pattern_properties(ctx, o, value, errors);
             }
             val => {
-                errors
-                    .push(ValidationError::type_mismatch(value, JsonType::Object, val.get_type()));
+                errors.push(ValidationError::type_mismatch(
+                    value,
+                    JsonType::Object,
+                    val.get_type(),
+                ));
             }
         }
     }
@@ -245,17 +257,17 @@ impl ObjectSchemaBuilder {
     /// Finishes construction of the schema, yielding the finished `Schema`.
     pub fn build(self) -> Schema {
         From::from(ObjectSchema {
-                       description: self.description,
-                       id: self.id,
-                       title: self.title,
+            description: self.description,
+            id: self.id,
+            title: self.title,
 
-                       properties: self.properties,
-                       additional_properties: Some(self.additional_properties),
-                       required: self.required,
-                       min_properties: self.min_properties,
-                       max_properties: self.max_properties,
-                       pattern_properties: self.pattern_properties,
-                   })
+            properties: self.properties,
+            additional_properties: Some(self.additional_properties),
+            required: self.required,
+            min_properties: self.min_properties,
+            max_properties: self.max_properties,
+            pattern_properties: self.pattern_properties,
+        })
     }
 }
 
@@ -309,9 +321,10 @@ mod tests {
 
     #[test]
     fn schema_properties() {
-        let input = serde_json::from_str(r#"{"id": 123, "name": "test", "tags": ["a", "b", "c"],
-        "color": [255, 255, 255]}"#)
-                .unwrap();
+        let input = serde_json::from_str(
+            r#"{"id": 123, "name": "test", "tags": ["a", "b", "c"],
+        "color": [255, 255, 255]}"#,
+        ).unwrap();
         let mut schemas = HashMap::new();
         schemas.insert("id".into(), Schema::from(IntegerSchema::default()));
         schemas.insert("name".into(), Schema::from(StringSchema::default()));
@@ -321,9 +334,11 @@ mod tests {
         schemas.insert("tags".into(), tags);
         let color = ArraySchemaBuilder::default()
             .additional_items(false)
-            .item_schemas(vec![Schema::from(IntegerSchema::default()),
-                               Schema::from(IntegerSchema::default()),
-                               Schema::from(IntegerSchema::default())])
+            .item_schemas(vec![
+                Schema::from(IntegerSchema::default()),
+                Schema::from(IntegerSchema::default()),
+                Schema::from(IntegerSchema::default()),
+            ])
             .build();
         schemas.insert("color".into(), color);
 
@@ -337,14 +352,18 @@ mod tests {
 
     fn canada_schema() -> Schema {
         let vector = ArraySchemaBuilder::default()
-            .item_schemas(vec![From::from(NumberSchema::default()),
-                               From::from(NumberSchema::default())])
+            .item_schemas(vec![
+                From::from(NumberSchema::default()),
+                From::from(NumberSchema::default()),
+            ])
             .build();
 
         let coordinates = ArraySchemaBuilder::default()
-            .all_items_schema(ArraySchemaBuilder::default()
-                                  .all_items_schema(vector)
-                                  .build())
+            .all_items_schema(
+                ArraySchemaBuilder::default()
+                    .all_items_schema(vector)
+                    .build(),
+            )
             .build();
 
         let geometry = ObjectSchemaBuilder::default()
@@ -353,10 +372,12 @@ mod tests {
             .build();
 
         let features = ArraySchemaBuilder::default()
-            .all_items_schema(ObjectSchemaBuilder::default()
-                                  .add_property("type", StringSchema::default())
-                                  .add_property("geometry", geometry)
-                                  .build())
+            .all_items_schema(
+                ObjectSchemaBuilder::default()
+                    .add_property("type", StringSchema::default())
+                    .add_property("geometry", geometry)
+                    .build(),
+            )
             .build();
         ObjectSchemaBuilder::default()
             .add_property("type", Schema::from(StringSchema::default()))

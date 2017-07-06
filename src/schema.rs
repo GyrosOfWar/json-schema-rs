@@ -19,16 +19,19 @@ pub struct Context<'s> {
 /// The trait that all schema types implement.
 pub trait SchemaBase {
     #[doc(hidden)]
-    fn validate_inner<'json>(&self,
-                             ctx: &Context,
-                             value: &'json Value,
-                             errors: &mut Vec<ValidationError<'json>>);
+    fn validate_inner<'json>(
+        &self,
+        ctx: &Context,
+        value: &'json Value,
+        errors: &mut Vec<ValidationError<'json>>,
+    );
 
     /// Validates a JSON value with this schema.
-    fn validate_start<'json>(&self,
-                             value: &'json Value,
-                             root: &Schema)
-                             -> Result<(), ValidationErrors<'json>> {
+    fn validate_start<'json>(
+        &self,
+        value: &'json Value,
+        root: &Schema,
+    ) -> Result<(), ValidationErrors<'json>> {
         let mut errors = vec![];
         let context = Context { root };
         self.validate_inner(&context, value, &mut errors);
@@ -47,10 +50,12 @@ pub struct EmptySchema;
 
 #[doc(hidden)]
 impl SchemaBase for EmptySchema {
-    fn validate_inner<'json>(&self,
-                             _ctx: &Context,
-                             _value: &'json Value,
-                             _errors: &mut Vec<ValidationError<'json>>) {
+    fn validate_inner<'json>(
+        &self,
+        _ctx: &Context,
+        _value: &'json Value,
+        _errors: &mut Vec<ValidationError<'json>>,
+    ) {
 
     }
 }
@@ -114,10 +119,12 @@ impl_traits! { EmptySchema, Schema::Empty }
 
 impl SchemaBase for Schema {
     #[doc(hidden)]
-    fn validate_inner<'json>(&self,
-                             ctx: &Context,
-                             value: &'json Value,
-                             errors: &mut Vec<ValidationError<'json>>) {
+    fn validate_inner<'json>(
+        &self,
+        ctx: &Context,
+        value: &'json Value,
+        errors: &mut Vec<ValidationError<'json>>,
+    ) {
         use self::Schema::*;
         match *self {
             Boolean(ref s) => s.validate_inner(ctx, value, errors),

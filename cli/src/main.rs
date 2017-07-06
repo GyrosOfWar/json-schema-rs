@@ -25,19 +25,23 @@ fn run() -> Result<()> {
     let matches = App::new("json_schema")
         .about("JSON schema validator")
         .author("Martin Tomasi <martin.tomasi@gmail.com>")
-        .arg(Arg::with_name("schema")
-                 .short("s")
-                 .long("schema")
-                 .help("Path to the schema file")
-                 .takes_value(true)
-                 .required(true))
-        .arg(Arg::with_name("input")
-                 .short("i")
-                 .long("input")
-                 .help("One or more input files")
-                 .takes_value(true)
-                 .multiple(true)
-                 .min_values(1))
+        .arg(
+            Arg::with_name("schema")
+                .short("s")
+                .long("schema")
+                .help("Path to the schema file")
+                .takes_value(true)
+                .required(true),
+        )
+        .arg(
+            Arg::with_name("input")
+                .short("i")
+                .long("input")
+                .help("One or more input files")
+                .takes_value(true)
+                .multiple(true)
+                .min_values(1),
+        )
         .get_matches();
     let schema_path = matches.value_of("schema").unwrap();
     let schema: Schema = serde_json::from_reader(File::open(schema_path)?)?;
@@ -49,9 +53,11 @@ fn run() -> Result<()> {
         let duration = start.elapsed();
         match result {
             Ok(_) => {
-                println!("{} validated successfully in {} ms",
-                         json_path,
-                         duration.millis())
+                println!(
+                    "{} validated successfully in {} ms",
+                    json_path,
+                    duration.millis()
+                )
             }
             Err(e) => println!("{} has errors:\n{}", json_path, e),
         }

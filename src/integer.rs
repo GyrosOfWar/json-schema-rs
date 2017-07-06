@@ -22,10 +22,12 @@ pub struct IntegerSchema {
 
 impl SchemaBase for IntegerSchema {
     #[doc(hidden)]
-    fn validate_inner<'json>(&self,
-                             ctx: &Context,
-                             value: &'json Value,
-                             errors: &mut Vec<ValidationError<'json>>) {
+    fn validate_inner<'json>(
+        &self,
+        ctx: &Context,
+        value: &'json Value,
+        errors: &mut Vec<ValidationError<'json>>,
+    ) {
         match value.get_type() {
             JsonType::Integer => {}
             ty => errors.push(ValidationError::type_mismatch(value, JsonType::Integer, ty)),
