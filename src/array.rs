@@ -184,51 +184,53 @@ impl Default for ArraySchemaBuilder {
 }
 
 impl ArraySchemaBuilder {
+    /// Sets the description.
     pub fn description<V: Into<String>>(mut self, value: V) -> Self {
         self.description = Some(value.into());
         self
     }
 
+    /// Sets the ID.
     pub fn id<V: Into<String>>(mut self, value: V) -> Self {
         self.id = Some(value.into());
         self
     }
-
+    /// Sets the title.
     pub fn title<V: Into<String>>(mut self, value: V) -> Self {
         self.title = Some(value.into());
         self
     }
-
+    /// Set the minimum number of items this array must have.
     pub fn min_items(mut self, value: usize) -> Self {
         self.min_items = Some(value);
         self
     }
-
+    /// Set the maximum number of items this array may have.
     pub fn max_items(mut self, value: usize) -> Self {
         self.max_items = Some(value);
         self
     }
-
-    pub fn unique_items(mut self, value: bool) -> Self {
-        self.unique_items = value;
+    /// Make it so array items have to be unique.
+    pub fn unique_items(mut self) -> Self {
+        self.unique_items = true;
         self
     }
-
+    /// Set a schema that every item must conform to. (list validation)
     pub fn all_items_schema<V: Into<Schema>>(mut self, value: V) -> Self {
         self.items = Some(Items::List(Box::new(value.into())));
         self
     }
-
+    /// Set a list of schemas that each item must conform to. (tuple validation)
     pub fn item_schemas<V: Into<Vec<Schema>>>(mut self, value: V) -> Self {
         self.items = Some(Items::Tuple(value.into()));
         self
     }
-
+    /// Set whether additional items are allowed (tuple validation).
     pub fn additional_items(mut self, value: bool) -> Self {
         self.additional_items = value;
         self
     }
-
+    /// Returns the finished `Schema`.
     pub fn build(self) -> Schema {
         From::from(ArraySchema {
             description: self.description,
@@ -247,11 +249,6 @@ impl ArraySchemaBuilder {
 
 #[cfg(test)]
 mod tests {
-    use serde_json;
-    use super::*;
-    use number::NumberSchemaBuilder;
-    use errors::*;
-
     #[test]
     fn unique_elements() {
         let schema = ArraySchemaBuilder::default().unique_items(true).build();

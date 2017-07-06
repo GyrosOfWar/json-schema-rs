@@ -3,7 +3,7 @@ extern crate json_schema;
 
 use std::str::FromStr;
 
-use json_schema::{Schema, SchemaBase};
+use json_schema::Schema;
 
 const SCHEMA: &str = r#"
 {

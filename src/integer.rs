@@ -1,8 +1,8 @@
 use serde_json::Value;
 
 use util::{JsonType, JsonValueExt};
-use schema::{SchemaBase, Context, Schema};
-use errors::{ValidationError, ErrorKind};
+use schema::{SchemaBase, Context};
+use errors::ValidationError;
 
 /// Schema for integer values like `42`.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -24,7 +24,7 @@ impl SchemaBase for IntegerSchema {
     #[doc(hidden)]
     fn validate_inner<'json>(
         &self,
-        ctx: &Context,
+        _ctx: &Context,
         value: &'json Value,
         errors: &mut Vec<ValidationError<'json>>,
     ) {

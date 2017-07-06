@@ -2,8 +2,8 @@ use serde_json::Value;
 
 use schema::{SchemaBase, Context, Schema};
 use errors::ValidationError;
-use util::JsonValueExt;
 
+/// Schema that's a reference to another part of this schema.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ReferenceSchema {
     #[serde(rename = "$ref")]

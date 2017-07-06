@@ -4,6 +4,10 @@ use util::{JsonType, JsonValueExt};
 use errors::{ValidationError, ErrorKind};
 use schema::{SchemaBase, Context, Schema};
 
+/// A schema for JSON numbers. This (contrary to `IntegerSchema`) allows
+/// for floating point values. Supports validation of a minimum and maximum
+/// value (both either inclusive or exclusive) and restricting the number to a multiple
+/// of some other number.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(deny_unknown_fields)]
@@ -73,7 +77,7 @@ impl SchemaBase for NumberSchema {
     #[doc(hidden)]
     fn validate_inner<'json>(
         &self,
-        ctx: &Context,
+        _ctx: &Context,
         value: &'json Value,
         errors: &mut Vec<ValidationError<'json>>,
     ) {
@@ -91,6 +95,7 @@ impl SchemaBase for NumberSchema {
     }
 }
 
+/// Builder for a number schema.
 #[derive(Default, Debug)]
 pub struct NumberSchemaBuilder {
     description: Option<String>,
@@ -105,16 +110,45 @@ pub struct NumberSchemaBuilder {
 }
 
 impl NumberSchemaBuilder {
+    /// Set the description
+    pub fn description<V: Into<String>>(mut self, value: V) -> Self {
+        self.description = Some(value.into());
+        self
+    }
+
+    /// Set the ID
+    pub fn id<V: Into<String>>(mut self, value: V) -> Self {
+        self.id = Some(value.into());
+        self
+    }
+    /// Set the title
+    pub fn title<V: Into<String>>(mut self, value: V) -> Self {
+        self.title = Some(value.into());
+        self
+    }
+    /// Sets the minimum value.
     pub fn minimum(mut self, value: f64) -> Self {
         self.minimum = Some(value);
         self
     }
-
+    /// Sets the maximum value.
     pub fn maximum(mut self, value: f64) -> Self {
         self.maximum = Some(value);
         self
     }
+    /// Makes the maximum value exclusive.
+    pub fn exclusive_maximum(mut self) -> Self {
+        self.exclusive_maximum = true;
+        self
+    }
 
+    /// Makes the minimum value exclusive.
+    pub fn exclusive_minimum(mut self) -> Self {
+        self.exclusive_minimum = true;
+        self
+    }
+
+    /// Returns the finished `Schema`.
     pub fn build(self) -> Schema {
         From::from(NumberSchema {
             description: self.description,

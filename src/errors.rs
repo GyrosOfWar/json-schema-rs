@@ -3,17 +3,20 @@ use std::{fmt, error};
 use serde_json::Value;
 
 use util::JsonType;
-use string::Format;
-use regex::Regex;
 
+pub use self::generated::*;
+
+/// A error that occurs during validation.
 #[derive(Debug)]
 pub struct ValidationError<'json> {
+    /// Reason for the error.
     pub reason: ErrorKind,
+    /// Pointer to the relevant JSON node.
     pub node: &'json Value,
 }
 
 impl<'json> ValidationError<'json> {
-    pub fn type_mismatch(
+    pub(crate) fn type_mismatch(
         node: &'json Value,
         expected: JsonType,
         found: JsonType,
@@ -31,6 +34,7 @@ impl<'json> fmt::Display for ValidationError<'json> {
     }
 }
 
+/// A list of errors.
 #[derive(Debug)]
 pub struct ValidationErrors<'json>(pub Vec<ValidationError<'json>>);
 
@@ -55,56 +59,63 @@ impl<'json> From<ValidationErrors<'json>> for Error {
     }
 }
 
-error_chain! {
-    foreign_links {
-        Io(::std::io::Error);
-        Serde(::serde_json::Error);
-    }
+#[allow(missing_docs)]
+mod generated {
+    use util::JsonType;
+    use string::Format;
+    use regex::Regex;
 
-    errors {
-        TypeMismatch { expected: JsonType, found: JsonType } {
-            description("Type mismatch")
-            display("Type mismatch: expected {}, found {}", expected, found)
+    error_chain! {
+        foreign_links {
+            Io(::std::io::Error);
+            Serde(::serde_json::Error);
         }
-        TupleLengthMismatch { schemas: usize, tuple: usize } {
-            description("Tuple length mismatch")
-            display("Tuple length mismatch: expected {}, found {}", schemas, tuple)
-        }
-        MaxLength { expected: usize, found: usize } {
-            description("Maximum length exceeded")
-            display("Length mismatch: Expected a maximum of {}, found {}", expected, found)
-        }
-        MinLength { expected: usize, found: usize } {
-            description("Value below minumum length")
-            display("Length mismatch: Expected a minimum of {}, found {}", expected, found)
-        }
-        MissingProperty(prop: String) {
-            description("Missing object property")
-            display("Missing object property: `{}`", prop)
-        }
-        ArrayItemNotUnique {
-            description("Array items are not unique")
-            display("Array items are not unique")
-        }
-        NumberRange { bound: f64, value: f64 } {
-            description("Number out of range")
-            display("Number out of range: bound is {}, value is {}", bound, value)
-        }
-        PropertyCount { bound: usize, found: usize } {
-            description("Property count out of range")
-            display("Property count out of range: bound is {}, value is {}", bound, found)
-        }
-        InvalidRegex(regex: String) {
-            description("Invalid regex")
-            display("Invalid regex: {}", regex)
-        }
-        InvalidFormat(format: Format) {
-            description("Error parsing with format")
-            display("Error parsing with format: {:?}", format)
-        }
-        RegexMismatch { regex: Regex } {
-            description("Regex did not match")
-            display("Regex did not match: {}", regex)
+
+        errors {
+            TypeMismatch { expected: JsonType, found: JsonType } {
+                description("Type mismatch")
+                display("Type mismatch: expected {}, found {}", expected, found)
+            }
+            TupleLengthMismatch { schemas: usize, tuple: usize } {
+                description("Tuple length mismatch")
+                display("Tuple length mismatch: expected {}, found {}", schemas, tuple)
+            }
+            MaxLength { expected: usize, found: usize } {
+                description("Maximum length exceeded")
+                display("Length mismatch: Expected a maximum of {}, found {}", expected, found)
+            }
+            MinLength { expected: usize, found: usize } {
+                description("Value below minumum length")
+                display("Length mismatch: Expected a minimum of {}, found {}", expected, found)
+            }
+            MissingProperty(prop: String) {
+                description("Missing object property")
+                display("Missing object property: `{}`", prop)
+            }
+            ArrayItemNotUnique {
+                description("Array items are not unique")
+                display("Array items are not unique")
+            }
+            NumberRange { bound: f64, value: f64 } {
+                description("Number out of range")
+                display("Number out of range: bound is {}, value is {}", bound, value)
+            }
+            PropertyCount { bound: usize, found: usize } {
+                description("Property count out of range")
+                display("Property count out of range: bound is {}, value is {}", bound, found)
+            }
+            InvalidRegex(regex: String) {
+                description("Invalid regex")
+                display("Invalid regex: {}", regex)
+            }
+            InvalidFormat(format: Format) {
+                description("Error parsing with format")
+                display("Error parsing with format: {:?}", format)
+            }
+            RegexMismatch { regex: Regex } {
+                description("Regex did not match")
+                display("Regex did not match: {}", regex)
+            }
         }
     }
 }

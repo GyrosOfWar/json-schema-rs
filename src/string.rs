@@ -9,6 +9,7 @@ use util::{JsonType, JsonValueExt};
 use schema::{SchemaBase, Context, Schema};
 use errors::{ValidationError, ErrorKind};
 
+#[allow(unused)]
 mod regex_serde {
     use serde::{self, Deserialize, Serializer, Deserializer};
     use regex::Regex;
@@ -33,6 +34,9 @@ mod regex_serde {
     }
 }
 
+/// A schema for a JSON string like `"123"`. Supports validation
+/// of length (maximum or minimum), content (via RegEx) or format
+/// (see `Format`)
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(deny_unknown_fields)]
@@ -97,7 +101,7 @@ impl StringSchema {
                         })
                     }
                 }
-                Err(e) => {
+                Err(_) => {
                     errors.push(ValidationError {
                         reason: ErrorKind::InvalidRegex(re.clone()),
                         node: node,
@@ -112,7 +116,7 @@ impl SchemaBase for StringSchema {
     #[doc(hidden)]
     fn validate_inner<'json>(
         &self,
-        ctx: &Context,
+        _ctx: &Context,
         value: &'json Value,
         errors: &mut Vec<ValidationError<'json>>,
     ) {
@@ -120,7 +124,7 @@ impl SchemaBase for StringSchema {
             &Value::String(ref s) => {
                 self.validate_string(s.as_str(), value, errors);
             }
-            val => {
+            _ => {
                 errors.push(ValidationError::type_mismatch(
                     value,
                     JsonType::String,
@@ -131,6 +135,7 @@ impl SchemaBase for StringSchema {
     }
 }
 
+/// A builder for a string schema.
 #[derive(Clone, Debug, Default)]
 pub struct StringSchemaBuilder {
     description: Option<String>,
@@ -145,41 +150,44 @@ pub struct StringSchemaBuilder {
 
 #[allow(unused)]
 impl StringSchemaBuilder {
+    /// Sets the description.
     pub fn description<V: Into<String>>(mut self, value: V) -> Self {
         self.description = Some(value.into());
         self
     }
 
+    /// Sets the ID.
     pub fn id<V: Into<String>>(mut self, value: V) -> Self {
         self.id = Some(value.into());
         self
     }
-
+    /// Sets the title.
     pub fn title<V: Into<String>>(mut self, value: V) -> Self {
         self.title = Some(value.into());
         self
     }
 
+    /// Set the minimum length for the string
     pub fn min_length(mut self, value: usize) -> Self {
         self.min_length = Some(value);
         self
     }
-
+    /// Set the meximum length for the string
     pub fn max_length(mut self, value: usize) -> Self {
         self.max_length = Some(value);
         self
     }
-
+    /// Set the pattern (must be a valid Regex) for the string
     pub fn pattern(mut self, pattern: String) -> Self {
         self.pattern = Some(pattern);
         self
     }
-
+    /// Set the string's format (e.g. `Format::DateTime`)
     pub fn format(mut self, format: Format) -> Self {
         self.format = Some(format);
         self
     }
-
+    /// Returns the finished `Schema`.
     pub fn build(self) -> Schema {
         Schema::from(StringSchema {
             description: self.description,
@@ -231,9 +239,6 @@ impl Format {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use serde_json;
-
     #[test]
     fn string_len() {
         let schema = StringSchemaBuilder::default()

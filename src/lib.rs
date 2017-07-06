@@ -4,7 +4,6 @@
 //! [ ] schema references per JSON pointer syntax
 //! [ ] enums
 
-#![allow(unused, dead_code)]
 #![deny(missing_debug_implementations, missing_copy_implementations,
         trivial_casts, trivial_numeric_casts,
         unsafe_code, unstable_features,

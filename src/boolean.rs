@@ -1,9 +1,10 @@
 use serde_json::Value;
 
 use util::{JsonType, JsonValueExt};
-use schema::{SchemaBase, Context, Schema};
+use schema::{SchemaBase, Context};
 use errors::{ValidationError, ErrorKind};
 
+/// A schema for a JSON boolean value (`true`, `false`).
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(deny_unknown_fields)]
@@ -17,7 +18,7 @@ impl SchemaBase for BooleanSchema {
     #[doc(hidden)]
     fn validate_inner<'json>(
         &self,
-        ctx: &Context,
+        _ctx: &Context,
         value: &'json Value,
         errors: &mut Vec<ValidationError<'json>>,
     ) {

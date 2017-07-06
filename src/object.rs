@@ -273,14 +273,11 @@ impl ObjectSchemaBuilder {
 
 #[cfg(test)]
 mod tests {
-    use std::fs::File;
 
     use super::*;
-    use integer::IntegerSchema;
     use string::StringSchema;
     use array::ArraySchemaBuilder;
     use number::NumberSchema;
-    use serde_json;
 
     #[test]
     fn required_props() {
@@ -350,6 +347,7 @@ mod tests {
         schema.validate(&input).unwrap();
     }
 
+    #[allow(unused)]
     fn canada_schema() -> Schema {
         let vector = ArraySchemaBuilder::default()
             .item_schemas(vec![

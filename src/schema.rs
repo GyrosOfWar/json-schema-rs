@@ -11,6 +11,7 @@ use number::NumberSchema;
 use string::StringSchema;
 
 // TODO move the other parameters to the context?
+#[doc(hidden)]
 #[derive(Debug)]
 pub struct Context<'s> {
     pub root: &'s Schema,
@@ -87,6 +88,7 @@ pub enum Schema {
 }
 
 impl Schema {
+    /// Kicks off validation for this schema.
     pub fn validate<'json>(&self, value: &'json Value) -> Result<(), ValidationErrors<'json>> {
         self.validate_start(value, self)
     }
