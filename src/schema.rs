@@ -4,7 +4,7 @@ use serde_json::{self, Value};
 
 use boolean::BooleanSchema;
 use integer::IntegerSchema;
-use errors::{ValidationError, ValidationErrors, Error};
+use errors::{Error, ValidationError, ValidationErrors};
 use array::ArraySchema;
 use object::ObjectSchema;
 use number::NumberSchema;

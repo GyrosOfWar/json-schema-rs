@@ -1,5 +1,5 @@
-extern crate serde_json;
 extern crate json_schema;
+extern crate serde_json;
 
 use std::str::FromStr;
 

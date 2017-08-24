@@ -1,8 +1,8 @@
 use serde_json::Value;
 
 use util::{JsonType, JsonValueExt};
-use errors::{ValidationError, ErrorKind};
-use schema::{Schema, SchemaBase, Context};
+use errors::{ErrorKind, ValidationError};
+use schema::{Context, Schema, SchemaBase};
 
 /// Schema for JSON arrays like `[1, 2, 3]`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -92,11 +92,9 @@ impl ArraySchema {
                         schema.validate_inner(ctx, value, errors);
                     }
                 }
-                Items::List(ref schema) => {
-                    for value in array {
-                        schema.validate_inner(ctx, value, errors);
-                    }
-                }
+                Items::List(ref schema) => for value in array {
+                    schema.validate_inner(ctx, value, errors);
+                },
             }
         }
     }
@@ -140,13 +138,11 @@ impl SchemaBase for ArraySchema {
                 self.validate_items(ctx, array, value, errors);
                 self.validate_unique(array, value, errors);
             }
-            val => {
-                errors.push(ValidationError::type_mismatch(
-                    val,
-                    JsonType::Array,
-                    val.get_type(),
-                ))
-            }
+            val => errors.push(ValidationError::type_mismatch(
+                val,
+                JsonType::Array,
+                val.get_type(),
+            )),
         }
     }
 }

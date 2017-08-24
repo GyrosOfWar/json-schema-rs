@@ -1,4 +1,4 @@
-use std::{fmt, error};
+use std::{error, fmt};
 
 use serde_json::Value;
 
@@ -66,56 +66,64 @@ mod generated {
     use regex::Regex;
 
     error_chain! {
-        foreign_links {
-            Io(::std::io::Error);
-            Serde(::serde_json::Error);
-        }
+            foreign_links {
+                Io(::std::io::Error);
+                Serde(::serde_json::Error);
+            }
 
-        errors {
-            TypeMismatch { expected: JsonType, found: JsonType } {
-                description("Type mismatch")
-                display("Type mismatch: expected {}, found {}", expected, found)
-            }
-            TupleLengthMismatch { schemas: usize, tuple: usize } {
-                description("Tuple length mismatch")
-                display("Tuple length mismatch: expected {}, found {}", schemas, tuple)
-            }
-            MaxLength { expected: usize, found: usize } {
-                description("Maximum length exceeded")
-                display("Length mismatch: Expected a maximum of {}, found {}", expected, found)
-            }
-            MinLength { expected: usize, found: usize } {
-                description("Value below minumum length")
-                display("Length mismatch: Expected a minimum of {}, found {}", expected, found)
-            }
-            MissingProperty(prop: String) {
-                description("Missing object property")
-                display("Missing object property: `{}`", prop)
-            }
-            ArrayItemNotUnique {
-                description("Array items are not unique")
-                display("Array items are not unique")
-            }
-            NumberRange { bound: f64, value: f64 } {
-                description("Number out of range")
-                display("Number out of range: bound is {}, value is {}", bound, value)
-            }
-            PropertyCount { bound: usize, found: usize } {
-                description("Property count out of range")
-                display("Property count out of range: bound is {}, value is {}", bound, found)
-            }
-            InvalidRegex(regex: String) {
-                description("Invalid regex")
-                display("Invalid regex: {}", regex)
-            }
-            InvalidFormat(format: Format) {
-                description("Error parsing with format")
-                display("Error parsing with format: {:?}", format)
-            }
-            RegexMismatch { regex: Regex } {
-                description("Regex did not match")
-                display("Regex did not match: {}", regex)
+            errors {
+                TypeMismatch { expected: JsonType, found: JsonType } {
+                    description("Type mismatch")
+                    display("Type mismatch: expected {}, found {}", expected, found)
+                }
+                TupleLengthMismatch { schemas: usize, tuple: usize } {
+                    description("Tuple length mismatch")
+                    display(
+                        "Tuple length mismatch: expected {}, found {}",
+                        schemas, tuple)
+                }
+                MaxLength { expected: usize, found: usize } {
+                    description("Maximum length exceeded")
+                    display(
+                        "Length mismatch: Expected a maximum of {}, found {}",
+                            expected, found)
+                }
+                MinLength { expected: usize, found: usize } {
+                    description("Value below minumum length")
+                    display(
+                        "Length mismatch: Expected a minimum of {}, found {}",
+                        expected, found)
+                }
+                MissingProperty(prop: String) {
+                    description("Missing object property")
+                    display("Missing object property: `{}`", prop)
+                }
+                ArrayItemNotUnique {
+                    description("Array items are not unique")
+                    display("Array items are not unique")
+                }
+                NumberRange { bound: f64, value: f64 } {
+                    description("Number out of range")
+                    display("Number out of range: bound is {}, value is {}", bound, value)
+                }
+                PropertyCount { bound: usize, found: usize } {
+                    description("Property count out of range")
+                    display(
+                        "Property count out of range: bound is {}, value is {}",
+                            bound, found)
+                }
+                InvalidRegex(regex: String) {
+                    description("Invalid regex")
+                    display("Invalid regex: {}", regex)
+                }
+                InvalidFormat(format: Format) {
+                    description("Error parsing with format")
+                    display("Error parsing with format: {:?}", format)
+                }
+                RegexMismatch { regex: Regex } {
+                    description("Regex did not match")
+                    display("Regex did not match: {}", regex)
+                }
             }
         }
-    }
 }

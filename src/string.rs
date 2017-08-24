@@ -6,12 +6,12 @@ use chrono::prelude::*;
 use url::Url;
 
 use util::{JsonType, JsonValueExt};
-use schema::{SchemaBase, Context, Schema};
-use errors::{ValidationError, ErrorKind};
+use schema::{Context, Schema, SchemaBase};
+use errors::{ErrorKind, ValidationError};
 
 #[allow(unused)]
 mod regex_serde {
-    use serde::{self, Deserialize, Serializer, Deserializer};
+    use serde::{self, Deserialize, Deserializer, Serializer};
     use regex::Regex;
 
     pub fn serialize<S>(regex: &Option<Regex>, serializer: S) -> Result<S::Ok, S::Error>
@@ -93,20 +93,16 @@ impl StringSchema {
 
         if let Some(ref re) = self.pattern {
             match Regex::new(re) {
-                Ok(re) => {
-                    if !re.is_match(value) {
-                        errors.push(ValidationError {
-                            reason: ErrorKind::RegexMismatch { regex: re.clone() },
-                            node: node,
-                        })
-                    }
-                }
-                Err(_) => {
+                Ok(re) => if !re.is_match(value) {
                     errors.push(ValidationError {
-                        reason: ErrorKind::InvalidRegex(re.clone()),
+                        reason: ErrorKind::RegexMismatch { regex: re.clone() },
                         node: node,
                     })
-                }
+                },
+                Err(_) => errors.push(ValidationError {
+                    reason: ErrorKind::InvalidRegex(re.clone()),
+                    node: node,
+                }),
             }
         }
     }
@@ -124,13 +120,11 @@ impl SchemaBase for StringSchema {
             &Value::String(ref s) => {
                 self.validate_string(s.as_str(), value, errors);
             }
-            _ => {
-                errors.push(ValidationError::type_mismatch(
-                    value,
-                    JsonType::String,
-                    value.get_type(),
-                ))
-            }
+            _ => errors.push(ValidationError::type_mismatch(
+                value,
+                JsonType::String,
+                value.get_type(),
+            )),
         }
     }
 }

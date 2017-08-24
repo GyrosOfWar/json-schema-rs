@@ -1,8 +1,8 @@
 use serde_json::Value;
 
 use util::{JsonType, JsonValueExt};
-use errors::{ValidationError, ErrorKind};
-use schema::{SchemaBase, Context, Schema};
+use errors::{ErrorKind, ValidationError};
+use schema::{Context, Schema, SchemaBase};
 
 /// A schema for JSON numbers. This (contrary to `IntegerSchema`) allows
 /// for floating point values. Supports validation of a minimum and maximum

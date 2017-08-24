@@ -3,24 +3,22 @@
 //! [ ] Null schema
 //! [ ] schema references per JSON pointer syntax
 //! [ ] enums
-
-#![deny(missing_debug_implementations, missing_copy_implementations,
-        trivial_casts, trivial_numeric_casts,
-        unsafe_code, unstable_features,
-        unused_import_braces, unused_qualifications)]
+#![deny(missing_debug_implementations, missing_copy_implementations, trivial_casts,
+       trivial_numeric_casts, unsafe_code, unstable_features, unused_import_braces,
+       unused_qualifications)]
 #![warn(missing_docs)]
-#![cfg_attr(feature="clippy", feature(plugin))]
-#![cfg_attr(feature="clippy", plugin(clippy))]
-#![recursion_limit="128"]
+#![cfg_attr(feature = "clippy", feature(plugin))]
+#![cfg_attr(feature = "clippy", plugin(clippy))]
+#![recursion_limit = "128"]
 
+extern crate chrono;
 #[macro_use]
 extern crate error_chain;
+extern crate regex;
 extern crate serde;
-extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
-extern crate regex;
-extern crate chrono;
+extern crate serde_json;
 extern crate url;
 
 /// Error and result types
@@ -44,6 +42,6 @@ pub mod reference;
 
 mod util;
 
-pub use schema::{SchemaBase, Schema};
+pub use schema::{Schema, SchemaBase};
 pub use array::ArraySchemaBuilder;
 pub use object::ObjectSchemaBuilder;

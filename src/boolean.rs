@@ -1,8 +1,8 @@
 use serde_json::Value;
 
 use util::{JsonType, JsonValueExt};
-use schema::{SchemaBase, Context};
-use errors::{ValidationError, ErrorKind};
+use schema::{Context, SchemaBase};
+use errors::{ErrorKind, ValidationError};
 
 /// A schema for a JSON boolean value (`true`, `false`).
 #[derive(Clone, Debug, Serialize, Deserialize)]

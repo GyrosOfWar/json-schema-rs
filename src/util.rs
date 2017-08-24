@@ -10,13 +10,11 @@ impl JsonValueExt for Value {
         match *self {
             Value::Null => JsonType::Null,
             Value::Bool(_) => JsonType::Boolean,
-            Value::Number(ref n) => {
-                if n.is_f64() {
-                    JsonType::Number
-                } else {
-                    JsonType::Integer
-                }
-            }
+            Value::Number(ref n) => if n.is_f64() {
+                JsonType::Number
+            } else {
+                JsonType::Integer
+            },
             Value::Array(_) => JsonType::Array,
             Value::Object(_) => JsonType::Object,
             Value::String(_) => JsonType::String,

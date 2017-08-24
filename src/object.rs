@@ -5,8 +5,8 @@ use serde_json::value::Map;
 use regex::Regex;
 
 use util::{JsonType, JsonValueExt};
-use schema::{SchemaBase, Context, Schema};
-use errors::{ValidationError, ErrorKind};
+use schema::{Context, Schema, SchemaBase};
+use errors::{ErrorKind, ValidationError};
 
 /// An object schema.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -44,14 +44,12 @@ impl ObjectSchema {
                     Some(value) => {
                         schema.validate_inner(ctx, value, errors);
                     }
-                    None => {
-                        if !self.additional_properties() {
-                            errors.push(ValidationError {
-                                reason: ErrorKind::MissingProperty(property.to_string()),
-                                node: parent,
-                            });
-                        }
-                    }
+                    None => if !self.additional_properties() {
+                        errors.push(ValidationError {
+                            reason: ErrorKind::MissingProperty(property.to_string()),
+                            node: parent,
+                        });
+                    },
                 }
             }
         }
@@ -129,12 +127,10 @@ impl ObjectSchema {
                             // Error: No matching property found
                         }
                     }
-                    Err(e) => {
-                        errors.push(ValidationError {
-                            reason: ErrorKind::InvalidRegex(format!("{}", e)),
-                            node: parent,
-                        })
-                    }
+                    Err(e) => errors.push(ValidationError {
+                        reason: ErrorKind::InvalidRegex(format!("{}", e)),
+                        node: parent,
+                    }),
                 }
             }
         }
@@ -286,8 +282,8 @@ mod tests {
 
     #[test]
     fn required_props() {
-        let input = serde_json::from_str(r#"{"id": 123.0, "name": "test", "unspecified": null}"#)
-            .unwrap();
+        let input =
+            serde_json::from_str(r#"{"id": 123.0, "name": "test", "unspecified": null}"#).unwrap();
         let schema = ObjectSchemaBuilder::default()
             .required(vec!["id".into(), "name".into()])
             .build();
@@ -296,8 +292,8 @@ mod tests {
 
     #[test]
     fn disallow_additional() {
-        let input = serde_json::from_str(r#"{"id": 123.0, "name": "test", "unspecified": null}"#)
-            .unwrap();
+        let input =
+            serde_json::from_str(r#"{"id": 123.0, "name": "test", "unspecified": null}"#).unwrap();
         let schema = ObjectSchemaBuilder::default()
             .additional_properties(false)
             .required(vec!["id".into(), "name".into()])

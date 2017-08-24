@@ -1,7 +1,7 @@
 use serde_json::Value;
 
 use util::{JsonType, JsonValueExt};
-use schema::{SchemaBase, Context};
+use schema::{Context, SchemaBase};
 use errors::ValidationError;
 
 /// Schema for integer values like `42`.

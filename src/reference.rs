@@ -1,20 +1,24 @@
 use serde_json::Value;
 
-use schema::{SchemaBase, Context, Schema};
+use schema::{Context, Schema, SchemaBase};
 use errors::ValidationError;
 
 /// Schema that's a reference to another part of this schema.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ReferenceSchema {
-    #[serde(rename = "$ref")]
-    reference: String,
+    #[serde(rename = "$ref")] reference: String,
 }
 
 impl ReferenceSchema {
-    fn resolve(&self) -> Schema {
-        // TODO
+    fn resolve(&self, ctx: &Context) -> Schema {
         // This document
-        if self.reference.starts_with('#') {}
+        let root = ctx.root;
+        if self.reference.starts_with('#') {
+            match *root {
+                Schema::Array(ref a) => {}
+                _ => {}
+            }
+        }
 
         unimplemented!()
     }
@@ -27,6 +31,6 @@ impl SchemaBase for ReferenceSchema {
         value: &'json Value,
         errors: &mut Vec<ValidationError<'json>>,
     ) {
-        self.resolve().validate_inner(ctx, value, errors)
+        self.resolve(ctx).validate_inner(ctx, value, errors)
     }
 }
