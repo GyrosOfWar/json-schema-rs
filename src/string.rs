@@ -239,6 +239,9 @@ impl Format {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use serde_json;
+
     #[test]
     fn string_len() {
         let schema = StringSchemaBuilder::default()

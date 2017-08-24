@@ -249,9 +249,15 @@ impl ArraySchemaBuilder {
 
 #[cfg(test)]
 mod tests {
+    use serde_json;
+
+    use super::*;
+    use errors::ErrorKind;
+    use number::NumberSchemaBuilder;
+
     #[test]
     fn unique_elements() {
-        let schema = ArraySchemaBuilder::default().unique_items(true).build();
+        let schema = ArraySchemaBuilder::default().unique_items().build();
         let input = serde_json::from_str("[1, 1, 2, 3, 4]").unwrap();
         let errors = schema.validate(&input).unwrap_err().0;
         assert_eq!(errors.len(), 1);

@@ -273,11 +273,16 @@ impl ObjectSchemaBuilder {
 
 #[cfg(test)]
 mod tests {
+    use std::fs::File;
+
+    use serde_json;
 
     use super::*;
     use string::StringSchema;
     use array::ArraySchemaBuilder;
     use number::NumberSchema;
+    use integer::IntegerSchema;
+
 
     #[test]
     fn required_props() {
