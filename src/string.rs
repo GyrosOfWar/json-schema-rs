@@ -35,7 +35,7 @@ mod regex_serde {
 }
 
 /// A schema for a JSON string like `"123"`. Supports validation
-/// of length (maximum or minimum), content (via RegEx) or format
+/// of length (maximum or minimum), content (via `Regex`) or format
 /// (see `Format`)
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -116,8 +116,8 @@ impl SchemaBase for StringSchema {
         value: &'json Value,
         errors: &mut Vec<ValidationError<'json>>,
     ) {
-        match value {
-            &Value::String(ref s) => {
+        match *value {
+            Value::String(ref s) => {
                 self.validate_string(s.as_str(), value, errors);
             }
             _ => errors.push(ValidationError::type_mismatch(

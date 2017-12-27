@@ -30,7 +30,7 @@ impl<'json> ValidationError<'json> {
 
 impl<'json> fmt::Display for ValidationError<'json> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Error at {}: {}", self.node, self.reason)
+        write!(f, "Error at JSON value `{}`: {}", self.node, self.reason)
     }
 }
 

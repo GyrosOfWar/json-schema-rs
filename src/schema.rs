@@ -9,6 +9,7 @@ use array::ArraySchema;
 use object::ObjectSchema;
 use number::NumberSchema;
 use string::StringSchema;
+use reference::ReferenceSchema;
 
 // TODO move the other parameters to the context?
 #[doc(hidden)]
@@ -85,12 +86,34 @@ pub enum Schema {
     Integer(IntegerSchema),
     /// The empty schema `{}`.
     Empty(EmptySchema),
+    /// A reference to some other schema
+    Reference(ReferenceSchema),
 }
 
 impl Schema {
     /// Kicks off validation for this schema.
     pub fn validate<'json>(&self, value: &'json Value) -> Result<(), ValidationErrors<'json>> {
         self.validate_start(value, self)
+    }
+    /// Resolve references for this schema
+    pub fn resolve_references(&mut self, schema: &Value) {
+        if let Some(obj) = schema.as_object() {
+            for (key, value) in obj {
+                if key == "$ref" && value.is_string() {
+                    let path = value.as_str().unwrap();
+                    // This document
+                    if path.starts_with('#') {
+                        if let Some(definition) = schema.pointer(&path[1..]) {
+                            println!("{}", definition);
+                        }
+                    } 
+                    // URI reference
+                    else {
+                        
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -118,6 +141,7 @@ impl_traits! { NumberSchema, Schema::Number }
 impl_traits! { StringSchema, Schema::String }
 impl_traits! { IntegerSchema, Schema::Integer }
 impl_traits! { EmptySchema, Schema::Empty }
+impl_traits! { ReferenceSchema, Schema::Reference }
 
 impl SchemaBase for Schema {
     #[doc(hidden)]
@@ -136,6 +160,23 @@ impl SchemaBase for Schema {
             String(ref s) => s.validate_inner(ctx, value, errors),
             Integer(ref s) => s.validate_inner(ctx, value, errors),
             Empty(ref s) => s.validate_inner(ctx, value, errors),
+            Reference(ref s) => s.validate_inner(ctx, value, errors),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs::File;
+
+    use serde_json::{self, Value};
+
+    use super::Schema;
+
+    #[test]
+    fn test_schema_references() {
+        let schema_raw: Value = serde_json::from_reader(File::open("data/schema-with-refs.json").unwrap()).unwrap();
+        let mut parsed_schema: Schema = serde_json::from_value(schema_raw.clone()).unwrap();
+        parsed_schema.resolve_references(&schema_raw);
     }
 }

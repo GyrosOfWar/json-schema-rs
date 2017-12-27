@@ -11,7 +11,7 @@ use errors::{ErrorKind, ValidationError};
 /// An object schema.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[serde(deny_unknown_fields)]
+// #[serde(deny_unknown_fields)]
 pub struct ObjectSchema {
     description: Option<String>,
     id: Option<String>,
@@ -124,7 +124,7 @@ impl ObjectSchema {
                             }
                         }
                         if !found_match {
-                            // Error: No matching property found
+                            // TODO? Error: No matching property found
                         }
                     }
                     Err(e) => errors.push(ValidationError {
@@ -216,7 +216,7 @@ impl ObjectSchemaBuilder {
 
     /// Set a map from property names to schemas.
     pub fn properties(mut self, value: HashMap<String, Schema>) -> Self {
-        self.properties = Some(value.into());
+        self.properties = Some(value);
         self
     }
 
